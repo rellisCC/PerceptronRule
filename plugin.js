@@ -676,7 +676,6 @@
          updateCurrentPointPanel();
         await refreshDatasetList();
         els.datasetSelect.value = name;
-        await chooseDataset(name);
         setStatus(`Sample dataset loaded ✓ (${cases.length} cases)`);
       } catch (e) {
         setStatus(`Error loading sample dataset: ${e.message}`);
