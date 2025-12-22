@@ -450,7 +450,7 @@
     els.predInfo.textContent = (yhat === 1 ? "+1 (Positive)" : "-1 (Negative)");
     els.sentInfo.textContent = (pt.Sentiment === 1 ? "+1 (Positive)" : "-1 (Negative)");
   //  els.mistakeInfo.textContent = mistake ? "YES" : "no";
-    els.deltaInfo.textContent = "";
+   if (!awaitingImprove) els.deltaInfo.textContent = "";
 
     // enable/disable "Rule improved..." based on state
     els.btnNextAfterImprove.disabled = !awaitingImprove;
