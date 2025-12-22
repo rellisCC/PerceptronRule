@@ -1,583 +1,696 @@
-/* Perceptron Trainer CODAP Plugin (CSP-safe)
-   Requires index.html to load CODAP plugin API bundle:
-     <script src="https://codap.concord.org/releases/latest/codap-plugin-api.js"></script>
-
-   Dataset expectations (student datasets):
-     - Cbest (numeric)
-     - Cbad  (numeric)
-     - Sentiment (numeric, -1 or +1)
-
-   Sample dataset comes from sample-data.js as window.SAMPLE_DATASET
+/* plugin.js — CODAP Perceptron Trainer
+   Uses iframe-phone to talk to CODAP Data Interactive API (no CodapPluginApi wrapper).
 */
 
-(() => {
+/* global iframePhone, SAMPLE_DATASETS */
+
+(function () {
+  "use strict";
+
+  // ----------------------------
+  // UI helpers
+  // ----------------------------
   const $ = (sel) => document.querySelector(sel);
-  const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-  const sign = (z) => (z >= 0 ? 1 : -1);
-  const fmt = (n) => (typeof n === "number" && isFinite(n) ? (Math.round(n * 1000) / 1000).toString() : "—");
 
-  // --- Small SVG "graph" coordinate system ---
-  // Here we treat Cbest, Cbad as axes (like x,y).
-  const world = { xmin: -0.5, xmax: 3.5, ymin: -0.5, ymax: 3.5 };
-  const svgSize = { w: 600, h: 400 };
-  const xToPx = (x) => ((x - world.xmin) / (world.xmax - world.xmin)) * svgSize.w;
-  const yToPx = (y) => (1 - (y - world.ymin) / (world.ymax - world.ymin)) * svgSize.h;
+  const els = {
+    datasetSelect: $("#datasetSelect"),
+    refreshBtn: $("#refreshBtn"),
+    loadSampleBtn: $("#loadSampleBtn"),
+    dataStatus: $("#dataStatus"),
 
-  // --- CODAP API ---
-  /** @type {any} */
-  let codap = null;
+    w1: $("#w1"),
+    w2: $("#w2"),
+    c: $("#c"),
+    lr: $("#lr"),
+    w1Val: $("#w1Val"),
+    w2Val: $("#w2Val"),
+    cVal: $("#cVal"),
+    lrVal: $("#lrVal"),
 
-  async function codapRequest(cmd) {
-    // CodapPluginApi exposes sendRequest({action, resource, values})
-    const res = await codap.sendRequest(cmd);
-    // res generally has {success, values}
-    if (res && res.success === false) {
-      const msg = (res.values && res.values.error) || res.values || res;
-      throw new Error(typeof msg === "string" ? msg : JSON.stringify(msg));
-    }
-    return res;
-  }
+    resetModelBtn: $("#resetModelBtn"),
+    evaluateBtn: $("#evaluateBtn"),
+    modelStatus: $("#modelStatus"),
 
-  // --- Plugin state ---
-  const state = {
-    dataContextName: null,
-    collectionName: null,
-    cases: [],
-    index: 0,
-    epoch: 0,
-    phase: "TRAIN_SINGLE", // TRAIN_SINGLE | EVAL
-    w1: 0.4,
-    w2: -0.4,
-    c: 2,
-    learnRate: 0.1
+    viz: $("#viz"),
+
+    ptInfo: $("#ptInfo"),
+    epochInfo: $("#epochInfo"),
+    indexInfo: $("#indexInfo"),
+    scoreInfo: $("#scoreInfo"),
+    predInfo: $("#predInfo"),
+    sentInfo: $("#sentInfo"),
+    mistakeInfo: $("#mistakeInfo"),
+    deltaInfo: $("#deltaInfo"),
+
+    btnCorrect: $("#btnCorrect"),
+    btnFail: $("#btnFail"),
+    btnNextAfterImprove: $("#btnNextAfterImprove"),
+
+    alertDlg: $("#alertDlg"),
+    alertMsg: $("#alertMsg"),
+    alertOk: $("#alertOk"),
+
+    evalDlg: $("#evalDlg"),
+    evalSummary: $("#evalSummary"),
+    evalClose: $("#evalClose")
   };
 
-  // --- DOM refs ---
-  const viz = $("#viz");
-
-  // --- Perceptron math ---
-  function score(pt) {
-    return state.w1 * pt.Cbest + state.w2 * pt.Cbad + state.c;
+  function setStatus(text) {
+    els.dataStatus.textContent = text;
   }
-  function predict(pt) {
-    return sign(score(pt));
-  }
-  function deltas(pt, sentiment) {
-    return {
-      dw1: state.learnRate * sentiment * pt.Cbest,
-      dw2: state.learnRate * sentiment * pt.Cbad,
-      dc: state.learnRate * sentiment
-    };
+  function setModelStatus(text) {
+    els.modelStatus.textContent = text || "";
   }
 
-  function currentCase() {
-    if (!state.cases.length) return null;
-    return state.cases[state.index % state.cases.length];
-  }
-
-  // --- UI helpers ---
   function showAlert(msg) {
-    $("#alertMsg").textContent = msg || "Check again! Does the current rule properly predict this point?";
-    $("#alertDlg").showModal();
+    els.alertMsg.textContent = msg || "Does the current rule properly predict this point?";
+    if (els.alertDlg && els.alertDlg.showModal) els.alertDlg.showModal();
+    else alert(els.alertMsg.textContent);
   }
 
-  function syncSliders() {
-    $("#w1").value = state.w1;
-    $("#w2").value = state.w2;
-    $("#c").value = state.c;
-    $("#lr").value = state.learnRate;
+  // ----------------------------
+  // CODAP phone / request layer
+  // ----------------------------
+  let phone = null;
+  let connected = false;
 
-    $("#w1Val").textContent = fmt(state.w1);
-    $("#w2Val").textContent = fmt(state.w2);
-    $("#cVal").textContent = fmt(state.c);
-    $("#lrVal").textContent = fmt(state.learnRate);
+  function ensurePhone() {
+    if (!phone) throw new Error("Not connected to CODAP (phone is null).");
   }
 
-  function updatePanel() {
-    const ca = currentCase();
-    if (!ca) {
-      $("#ptInfo").textContent = "—";
-      $("#indexInfo").textContent = "—";
-      $("#epochInfo").textContent = fmt(state.epoch);
-      $("#scoreInfo").textContent = "—";
-      $("#predInfo").textContent = "—";
-      $("#sentInfo").textContent = "—";
-      $("#mistakeInfo").textContent = "—";
-      $("#deltaInfo").textContent = "";
+  function codapRequest(action, resource, values) {
+    ensurePhone();
+    return new Promise((resolve, reject) => {
+      phone.sendRequest({ action, resource, values }, (result) => {
+        if (!result) return reject(new Error("No response from CODAP."));
+        if (result.success) resolve(result);
+        else reject(new Error((result.values && result.values.error) || "CODAP request failed."));
+      });
+    });
+  }
+
+  async function connectToCODAP() {
+    if (!window.iframePhone || !window.iframePhone.getIFrameEndpoint) {
+      throw new Error("iframePhone not found. Make sure iframe-phone.js is loaded before plugin.js");
+    }
+
+    phone = window.iframePhone.getIFrameEndpoint();
+
+    // CODAP expects the plugin to "initialize" by telling it name/version/dimensions.
+    // This is the standard handshake pattern for CODAP DI plugins.
+    phone.initialize();
+
+    // A light “ping” request to verify CODAP is listening:
+    await codapRequest("get", "interactiveFrame");
+    connected = true;
+    setStatus("Connected to CODAP ✓");
+  }
+
+  // ----------------------------
+  // Data model
+  // ----------------------------
+  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 2.0 };
+  let model = { ...DEFAULT_MODEL };
+
+  // Training state
+  let currentDatasetName = null;
+  let cases = []; // [{id, Cbest, Cbad, Sentiment}]
+  let curIndex = 0;
+  let epoch = 0;
+  let showingAll = false;
+  let lastEval = null;
+  let awaitingImprove = false;
+
+  // For plotting
+  const PLOT = { w: 600, h: 400, pad: 40 };
+  const AX = { xmin: -0.5, xmax: 2.5, ymin: -0.5, ymax: 2.5 };
+
+  // ----------------------------
+  // Sample dataset (Mama’s)
+  // ----------------------------
+  // Expects sample-data.js defines SAMPLE_DATASETS array
+  // with a dataset having:
+  //   name: "Sample Dataset"
+  //   attrs: [{name:"Cbest"}, {name:"Cbad"}, {name:"Sentiment"}]
+  //   cases: [{Cbest:0,Cbad:2,Sentiment:-1, Text:"..."}, ...]  (Text optional)
+  const SAMPLE_NAME = "Sample Dataset";
+  const SAMPLE_SPEC = (window.SAMPLE_DATASETS || []).find(d => d.name === SAMPLE_NAME);
+
+  // ----------------------------
+  // CODAP dataset utilities
+  // ----------------------------
+  async function listCODAPDatasets() {
+    const res = await codapRequest("get", "dataContextList");
+    // returns { values: { dataContexts: [{name, title, id}, ...] } }
+    const dcs = (res.values && res.values.dataContexts) ? res.values.dataContexts : [];
+    return dcs.map(dc => dc.name || dc.title).filter(Boolean);
+  }
+
+  async function loadDatasetCases(datasetName) {
+    // Get all cases from collection[0]
+    const collectionsRes = await codapRequest("get", `dataContext[${datasetName}].collectionList`);
+    const collections = collectionsRes.values && collectionsRes.values.collections;
+    if (!collections || !collections.length) throw new Error("No collections found in dataset.");
+    const collName = collections[0].name;
+
+    const casesRes = await codapRequest("get", `dataContext[${datasetName}].collection[${collName}].caseFormulaSearch[*]`);
+    const found = (casesRes.values && casesRes.values.cases) ? casesRes.values.cases : [];
+    // Normalize:
+    return found.map(c => {
+      const v = c.values || {};
+      return {
+        id: c.id,
+        Cbest: Number(v.Cbest ?? v.x ?? 0),
+        Cbad: Number(v.Cbad ?? v.y ?? 0),
+        Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
+        Text: v.Text ?? v.text ?? ""
+      };
+    });
+  }
+
+  async function createOrResetSampleDataset() {
+    if (!SAMPLE_SPEC) {
+      throw new Error("Sample dataset spec not found in sample-data.js (SAMPLE_DATASETS).");
+    }
+
+    // If exists, delete then recreate (simplest reset behavior)
+    const existing = await listCODAPDatasets();
+    if (existing.includes(SAMPLE_SPEC.name)) {
+      await codapRequest("delete", `dataContext[${SAMPLE_SPEC.name}]`);
+    }
+
+    // Create dataContext
+    await codapRequest("create", "dataContext", {
+      name: SAMPLE_SPEC.name,
+      title: SAMPLE_SPEC.name,
+      collections: [{
+        name: "Cases",
+        attrs: SAMPLE_SPEC.attrs.map(a => ({ name: a.name }))
+      }]
+    });
+
+    // Add cases
+    const values = SAMPLE_SPEC.cases.map(row => ({
+      values: row
+    }));
+    await codapRequest(
+      "create",
+      `dataContext[${SAMPLE_SPEC.name}].collection[Cases].case`,
+      values
+    );
+
+    return SAMPLE_SPEC.name;
+  }
+
+  // ----------------------------
+  // Perceptron math
+  // ----------------------------
+  function scorePoint(pt) {
+    return model.w1 * pt.Cbest + model.w2 * pt.Cbad + model.c;
+  }
+
+  function predFromScore(s) {
+    // predicts +1 when s >= 0 else -1
+    return s >= 0 ? 1 : -1;
+  }
+
+  function perceptronUpdate(pt, lr) {
+    // Standard perceptron update on mistake:
+    // w <- w + lr * y * x
+    // c <- c + lr * y
+    const y = pt.Sentiment;
+    const dw1 = lr * y * pt.Cbest;
+    const dw2 = lr * y * pt.Cbad;
+    const dc = lr * y;
+
+    model.w1 += dw1;
+    model.w2 += dw2;
+    model.c += dc;
+
+    return { dw1, dw2, dc };
+  }
+
+  function isMistake(pt) {
+    const s = scorePoint(pt);
+    const yhat = predFromScore(s);
+    return yhat !== pt.Sentiment;
+  }
+
+  // ----------------------------
+  // Rendering (simple SVG)
+  // ----------------------------
+  function clearSVG() {
+    while (els.viz.firstChild) els.viz.removeChild(els.viz.firstChild);
+  }
+
+  function sx(x) {
+    const { w, pad } = PLOT;
+    return pad + (x - AX.xmin) * (w - 2 * pad) / (AX.xmax - AX.xmin);
+  }
+  function sy(y) {
+    const { h, pad } = PLOT;
+    // SVG y goes down
+    return h - pad - (y - AX.ymin) * (h - 2 * pad) / (AX.ymax - AX.ymin);
+  }
+
+  function svgEl(name, attrs) {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+    Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, String(v)));
+    return el;
+  }
+
+  function drawAxes() {
+    const g = svgEl("g", {});
+    // border
+    g.appendChild(svgEl("rect", {
+      x: PLOT.pad, y: PLOT.pad,
+      width: PLOT.w - 2 * PLOT.pad,
+      height: PLOT.h - 2 * PLOT.pad,
+      fill: "none",
+      stroke: "#bbb"
+    }));
+    els.viz.appendChild(g);
+  }
+
+  function drawDecisionRegion() {
+    // Region where w1*Cbest + w2*Cbad + c >= 0 (orange)
+    // We approximate by filling polygon clipped to plot box.
+    const w1 = model.w1, w2 = model.w2, c = model.c;
+
+    // Line: w1 x + w2 y + c = 0  => y = -(w1/w2)x - c/w2 if w2 != 0
+    // We'll compute intersections with plot bounds and then fill the ">=0" side.
+    const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
+
+    // sample corners, evaluate inequality:
+    const corners = [
+      { x: bx0, y: by0 }, { x: bx1, y: by0 },
+      { x: bx1, y: by1 }, { x: bx0, y: by1 }
+    ];
+
+    function inside(p) {
+      return (w1 * p.x + w2 * p.y + c) >= 0;
+    }
+
+    // Build polygon via half-plane clipping (Sutherland–Hodgman)
+    function clip(poly) {
+      let output = poly.slice();
+      // clip against the decision boundary half-plane directly by checking inside
+      // We clip against the half-plane, not the box (box already is our poly).
+      const input = output;
+      output = [];
+      for (let i = 0; i < input.length; i++) {
+        const A = input[i];
+        const B = input[(i + 1) % input.length];
+        const Ain = inside(A);
+        const Bin = inside(B);
+
+        if (Ain && Bin) {
+          output.push(B);
+        } else if (Ain && !Bin) {
+          // leaving: add intersection
+          const I = intersectSeg(A, B);
+          if (I) output.push(I);
+        } else if (!Ain && Bin) {
+          // entering: add intersection then B
+          const I = intersectSeg(A, B);
+          if (I) output.push(I);
+          output.push(B);
+        }
+      }
+      return output;
+    }
+
+    // Intersection of segment with line w1 x + w2 y + c = 0
+    function intersectSeg(A, B) {
+      const fA = w1 * A.x + w2 * A.y + c;
+      const fB = w1 * B.x + w2 * B.y + c;
+      const denom = (fA - fB);
+      if (denom === 0) return null;
+      const t = fA / denom; // where f(t)=0 between A and B
+      if (t < 0 || t > 1) return null;
+      return { x: A.x + t * (B.x - A.x), y: A.y + t * (B.y - A.y) };
+    }
+
+    let poly = corners;
+    poly = clip(poly);
+
+    if (poly.length < 3) return;
+
+    const d = poly.map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x)} ${sy(p.y)}`).join(" ") + " Z";
+    els.viz.appendChild(svgEl("path", {
+      d,
+      fill: "rgba(255,165,0,0.25)",
+      stroke: "none"
+    }));
+  }
+
+  function drawDecisionLine() {
+    const w1 = model.w1, w2 = model.w2, c = model.c;
+    const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
+
+    const pts = [];
+
+    // Intersections with x=bx0 and x=bx1
+    if (w2 !== 0) {
+      const y0 = (-c - w1 * bx0) / w2;
+      const y1 = (-c - w1 * bx1) / w2;
+      pts.push({ x: bx0, y: y0 }, { x: bx1, y: y1 });
+    } else if (w1 !== 0) {
+      // vertical line: x = -c/w1
+      const x = (-c) / w1;
+      pts.push({ x, y: by0 }, { x, y: by1 });
+    }
+
+    // Clip to bounds by sampling endpoints and clipping visually (good enough for class range)
+    const A = pts[0], B = pts[1];
+
+    els.viz.appendChild(svgEl("line", {
+      x1: sx(A.x), y1: sy(A.y),
+      x2: sx(B.x), y2: sy(B.y),
+      stroke: "#333",
+      "stroke-width": 2
+    }));
+  }
+
+  function drawPoint(pt, isCurrent) {
+    const positive = (pt.Sentiment === 1);
+    const r = isCurrent ? 8 : 5;
+
+    els.viz.appendChild(svgEl("circle", {
+      cx: sx(pt.Cbest),
+      cy: sy(pt.Cbad),
+      r,
+      fill: positive ? "orange" : "purple",
+      opacity: isCurrent ? 1 : 0.65
+    }));
+  }
+
+  function renderViz() {
+    clearSVG();
+    drawDecisionRegion();
+    drawAxes();
+    drawDecisionLine();
+
+    if (showingAll) {
+      cases.forEach(pt => drawPoint(pt, false));
+    } else {
+      const pt = cases[curIndex];
+      if (pt) drawPoint(pt, true);
+    }
+  }
+
+  // ----------------------------
+  // Training workflow UI
+  // ----------------------------
+  function syncSlidersToModel() {
+    els.w1.value = String(model.w1);
+    els.w2.value = String(model.w2);
+    els.c.value = String(model.c);
+    updateSliderLabels();
+  }
+
+  function updateModelFromSliders() {
+    model.w1 = Number(els.w1.value);
+    model.w2 = Number(els.w2.value);
+    model.c = Number(els.c.value);
+    updateSliderLabels();
+    renderViz();
+    updateCurrentPointPanel();
+  }
+
+  function updateSliderLabels() {
+    els.w1Val.textContent = Number(els.w1.value).toFixed(2);
+    els.w2Val.textContent = Number(els.w2.value).toFixed(2);
+    els.cVal.textContent = Number(els.c.value).toFixed(2);
+    els.lrVal.textContent = Number(els.lr.value).toFixed(2);
+  }
+
+  function updateCurrentPointPanel() {
+    const pt = cases[curIndex];
+    if (!pt) {
+      els.ptInfo.textContent = "—";
+      els.indexInfo.textContent = "—";
       return;
     }
 
-    const pt = { Cbest: +ca.values.Cbest, Cbad: +ca.values.Cbad };
-    const sent = +ca.values.Sentiment;
-    const z = score(pt);
-    const pred = sign(z);
-    const correct = pred === sent;
+    const s = scorePoint(pt);
+    const yhat = predFromScore(s);
+    const mistake = (yhat !== pt.Sentiment);
 
-    const id = ca.values.ID ? `${ca.values.ID} ` : "";
-    $("#ptInfo").textContent = `${id}(Cbest=${fmt(pt.Cbest)}, Cbad=${fmt(pt.Cbad)})`;
-    $("#indexInfo").textContent = `${(state.index % state.cases.length) + 1}/${state.cases.length}`;
-    $("#epochInfo").textContent = fmt(state.epoch);
-    $("#scoreInfo").textContent = fmt(z);
-    $("#predInfo").textContent = pred === 1 ? "+1 (positive)" : "-1 (negative)";
-    $("#sentInfo").textContent = sent === 1 ? "+1 (positive)" : "-1 (negative)";
-    $("#mistakeInfo").textContent = correct ? "No" : "Yes";
+    els.ptInfo.textContent = `(${pt.Cbest}, ${pt.Cbad})`;
+    els.epochInfo.textContent = String(epoch);
+    els.indexInfo.textContent = String(curIndex + 1) + " / " + String(cases.length);
 
-    if (!correct) {
-      const d = deltas(pt, sent);
-      $("#deltaInfo").textContent = `Δw1=${fmt(d.dw1)}  Δw2=${fmt(d.dw2)}  Δc=${fmt(d.dc)}`;
-    } else {
-      $("#deltaInfo").textContent = "";
+    els.scoreInfo.textContent = s.toFixed(3);
+    els.predInfo.textContent = (yhat === 1 ? "+1 (Positive)" : "-1 (Negative)");
+    els.sentInfo.textContent = (pt.Sentiment === 1 ? "+1 (Positive)" : "-1 (Negative)");
+    els.mistakeInfo.textContent = mistake ? "YES" : "no";
+    els.deltaInfo.textContent = "";
+
+    // enable/disable "Rule improved..." based on state
+    els.btnNextAfterImprove.disabled = !awaitingImprove;
+  }
+
+  function advancePoint() {
+    curIndex += 1;
+    if (curIndex >= cases.length) {
+      curIndex = 0;
+      epoch += 1;
     }
+    awaitingImprove = false;
+    showingAll = false;
+    renderViz();
+    updateCurrentPointPanel();
   }
 
-  // --- SVG drawing ---
-  function clearViz() {
-    while (viz.firstChild) viz.removeChild(viz.firstChild);
-  }
+  function setDatasetUIOptions(datasetNames) {
+    els.datasetSelect.innerHTML = "";
+    // Always include sample dataset option at top
+    const sampleOpt = document.createElement("option");
+    sampleOpt.value = SAMPLE_NAME;
+    sampleOpt.textContent = SAMPLE_NAME;
+    els.datasetSelect.appendChild(sampleOpt);
 
-  function drawGrid() {
-    // light grid for integer counts 0..3
-    for (let xi = Math.ceil(world.xmin); xi <= Math.floor(world.xmax); xi++) {
-      const x = xToPx(xi);
-      const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      l.setAttribute("x1", x);
-      l.setAttribute("x2", x);
-      l.setAttribute("y1", 0);
-      l.setAttribute("y2", svgSize.h);
-      l.setAttribute("stroke", "#f0f0f0");
-      viz.appendChild(l);
-    }
-    for (let yi = Math.ceil(world.ymin); yi <= Math.floor(world.ymax); yi++) {
-      const y = yToPx(yi);
-      const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
-      l.setAttribute("x1", 0);
-      l.setAttribute("x2", svgSize.w);
-      l.setAttribute("y1", y);
-      l.setAttribute("y2", y);
-      l.setAttribute("stroke", "#f0f0f0");
-      viz.appendChild(l);
-    }
-  }
-
-  function boundarySegment(w1, w2, c) {
-    const pts = [];
-    const { xmin, xmax, ymin, ymax } = world;
-
-    function add(x, y) {
-      if (!isFinite(x) || !isFinite(y)) return;
-      if (x >= xmin - 1e-6 && x <= xmax + 1e-6 && y >= ymin - 1e-6 && y <= ymax + 1e-6) {
-        pts.push({ x, y });
-      }
-    }
-
-    // w1*x + w2*y + c = 0
-    if (Math.abs(w2) > 1e-9) {
-      add(xmin, (-c - w1 * xmin) / w2);
-      add(xmax, (-c - w1 * xmax) / w2);
-    }
-    if (Math.abs(w1) > 1e-9) {
-      add((-c - w2 * ymin) / w1, ymin);
-      add((-c - w2 * ymax) / w1, ymax);
-    }
-
-    const uniq = [];
-    for (const p of pts) {
-      if (!uniq.some(q => Math.abs(q.x - p.x) < 1e-6 && Math.abs(q.y - p.y) < 1e-6)) uniq.push(p);
-    }
-    return uniq.slice(0, 2);
-  }
-
-  function drawBoundary(w1, w2, c, opts = {}) {
-    const seg = boundarySegment(w1, w2, c);
-    if (seg.length < 2) return;
-    const [p1, p2] = seg;
-
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", xToPx(p1.x));
-    line.setAttribute("y1", yToPx(p1.y));
-    line.setAttribute("x2", xToPx(p2.x));
-    line.setAttribute("y2", yToPx(p2.y));
-    line.setAttribute("stroke", opts.stroke || "#111");
-    line.setAttribute("stroke-width", (opts.width || 2).toString());
-    if (opts.dash) line.setAttribute("stroke-dasharray", opts.dash);
-    if (opts.opacity != null) line.setAttribute("opacity", opts.opacity.toString());
-    viz.appendChild(line);
-  }
-
-  function drawShadedHalfPlane(w1, w2, c) {
-    // Shade region where w1*x + w2*y + c >= 0
-    const rect = [
-      { x: world.xmin, y: world.ymin },
-      { x: world.xmax, y: world.ymin },
-      { x: world.xmax, y: world.ymax },
-      { x: world.xmin, y: world.ymax }
-    ];
-
-    const inside = (p) => (w1 * p.x + w2 * p.y + c) >= 0;
-    const intersect = (A, B) => {
-      const fA = w1 * A.x + w2 * A.y + c;
-      const fB = w1 * B.x + w2 * B.y + c;
-      const t = fA / (fA - fB);
-      return { x: A.x + t * (B.x - A.x), y: A.y + t * (B.y - A.y) };
-    };
-
-    let out = [];
-    for (let i = 0; i < rect.length; i++) {
-      const A = rect[i];
-      const B = rect[(i + 1) % rect.length];
-      const Ain = inside(A);
-      const Bin = inside(B);
-      if (Ain && Bin) out.push(B);
-      else if (Ain && !Bin) out.push(intersect(A, B));
-      else if (!Ain && Bin) { out.push(intersect(A, B)); out.push(B); }
-    }
-    if (out.length < 3) return;
-
-    const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-    poly.setAttribute("points", out.map(p => `${xToPx(p.x)},${yToPx(p.y)}`).join(" "));
-    poly.setAttribute("fill", "rgba(255,165,0,0.18)");
-    poly.setAttribute("stroke", "none");
-    viz.appendChild(poly);
-  }
-
-  function drawPoint(pt, sentiment, r = 8) {
-    const circ = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    circ.setAttribute("cx", xToPx(pt.Cbest));
-    circ.setAttribute("cy", yToPx(pt.Cbad));
-    circ.setAttribute("r", r.toString());
-    circ.setAttribute("fill", sentiment === 1 ? "orange" : "purple");
-    circ.setAttribute("stroke", "#111");
-    circ.setAttribute("stroke-width", "1");
-    viz.appendChild(circ);
-  }
-
-  function render(showAll = false, ghost = null) {
-    clearViz();
-    drawGrid();
-    drawShadedHalfPlane(state.w1, state.w2, state.c);
-    if (ghost) drawBoundary(ghost.w1, ghost.w2, ghost.c, { stroke: "#555", dash: "6 6", opacity: 0.6 });
-    drawBoundary(state.w1, state.w2, state.c);
-
-    if (showAll) {
-      for (const ca of state.cases) {
-        drawPoint({ Cbest: +ca.values.Cbest, Cbad: +ca.values.Cbad }, +ca.values.Sentiment, 6);
-      }
-    } else {
-      const ca = currentCase();
-      if (ca) drawPoint({ Cbest: +ca.values.Cbest, Cbad: +ca.values.Cbad }, +ca.values.Sentiment, 8);
-    }
-  }
-
-  async function animateBoundaryTo(newW, ghost, durationMs = 600) {
-    const old = { w1: state.w1, w2: state.w2, c: state.c };
-    const start = performance.now();
-
-    return new Promise((resolve) => {
-      function tick(now) {
-        const t = clamp((now - start) / durationMs, 0, 1);
-        const u = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // ease in/out
-
-        state.w1 = old.w1 + (newW.w1 - old.w1) * u;
-        state.w2 = old.w2 + (newW.w2 - old.w2) * u;
-        state.c  = old.c  + (newW.c  - old.c)  * u;
-
-        syncSliders();
-        updatePanel();
-        render(false, ghost);
-
-        if (t < 1) requestAnimationFrame(tick);
-        else resolve();
-      }
-      requestAnimationFrame(tick);
-    });
-  }
-
-  // --- Training flow ---
-  function nextCase() {
-    if (!state.cases.length) return;
-    const prev = state.index % state.cases.length;
-    state.index = (state.index + 1) % state.cases.length;
-    const cur = state.index % state.cases.length;
-    if (prev === state.cases.length - 1 && cur === 0) state.epoch += 1;
-    updatePanel();
-    render(false);
-  }
-
-  // --- Evaluation ---
-  function evaluateAll() {
-    if (!state.cases.length) return { n: 0, acc: 0, mse: 0 };
-    let correct = 0;
-    let mse = 0;
-    for (const ca of state.cases) {
-      const x = +ca.values.Cbest;
-      const y = +ca.values.Cbad;
-      const s = +ca.values.Sentiment;
-      const z = state.w1 * x + state.w2 * y + state.c;
-      const p = sign(z);
-      if (p === s) correct += 1;
-      const e = s - z;
-      mse += e * e;
-    }
-    const n = state.cases.length;
-    return { n, acc: correct / n, mse: mse / n };
-  }
-
-  // --- CODAP dataset operations ---
-  async function refreshDatasetList() {
-    $("#dataStatus").textContent = "Refreshing dataset list…";
-    try {
-      const res = await codapRequest({ action: "get", resource: "dataContextList" });
-      const list = res.values || [];
-
-      const sel = $("#datasetSelect");
-      sel.innerHTML = "";
-
-      const optSample = document.createElement("option");
-      optSample.value = "__sample__";
-      optSample.textContent = "Sample Dataset";
-      sel.appendChild(optSample);
-
-      for (const dc of list) {
+    datasetNames
+      .filter(n => n !== SAMPLE_NAME)
+      .forEach(name => {
         const opt = document.createElement("option");
-        opt.value = dc.name;
-        opt.textContent = dc.title ? `${dc.title} (${dc.name})` : dc.name;
-        sel.appendChild(opt);
-      }
-
-      $("#dataStatus").textContent = "Choose a dataset (or Sample Dataset).";
-    } catch (e) {
-      console.error(e);
-      $("#dataStatus").textContent = "Could not load dataContextList (see console).";
-    }
-  }
-
-  async function attachToDatasetByName(dcName) {
-    const dc = await codapRequest({ action: "get", resource: `dataContext[${dcName}]` });
-    const collections = dc.values?.collections || [];
-    const col = collections[0];
-    if (!col) throw new Error("No collections found in dataset.");
-
-    const attrNames = new Set((col.attrs || []).map(a => a.name));
-    for (const req of ["Cbest", "Cbad", "Sentiment"]) {
-      if (!attrNames.has(req)) throw new Error(`Dataset "${dcName}" missing required attribute: ${req}`);
-    }
-
-    state.dataContextName = dcName;
-    state.collectionName = col.name;
-  }
-
-  async function loadAllCases() {
-    if (!state.dataContextName || !state.collectionName) return;
-    const dc = state.dataContextName;
-    const col = state.collectionName;
-
-    const res = await codapRequest({
-      action: "get",
-      resource: `dataContext[${dc}].collection[${col}].allCases`
-    });
-
-    const raw = (res.values && (res.values.cases || res.values)) || [];
-    state.cases = raw.map(ca => ({
-      id: ca.id,
-      values: {
-        ID: (ca.values?.ID ?? ca.case?.ID ?? ca.ID),
-        Text: (ca.values?.Text ?? ca.case?.Text ?? ca.Text),
-        Cbest: +(ca.values?.Cbest ?? ca.case?.Cbest ?? ca.Cbest),
-        Cbad: +(ca.values?.Cbad ?? ca.case?.Cbad ?? ca.Cbad),
-        Sentiment: +(ca.values?.Sentiment ?? ca.case?.Sentiment ?? ca.Sentiment)
-      }
-    }));
-
-    state.index = 0;
-    state.epoch = 0;
-  }
-
-  async function loadOrResetSampleDataset() {
-    const dcName = window.SAMPLE_DATASET.dataContextName;
-    const colName = window.SAMPLE_DATASET.collectionName;
-
-    // Create the dataContext (if it exists, CODAP will just keep it)
-    await codapRequest({
-      action: "create",
-      resource: "dataContext",
-      values: {
-        name: dcName,
-        title: window.SAMPLE_DATASET.title,
-        collections: [{
-          name: colName,
-          title: "Training Reviews",
-          labels: { singleCase: "review", pluralCase: "reviews" },
-          attrs: window.SAMPLE_DATASET.attrs
-        }]
-      }
-    });
-
-    // Best-effort delete existing cases (resource selectors vary a bit by CODAP build)
-    const deleteTry = [
-      `dataContext[${dcName}].collection[${colName}].allCases`,
-      `dataContext[${dcName}].collection[${colName}].cases`
-    ];
-    for (const resource of deleteTry) {
-      try {
-        await codapRequest({ action: "delete", resource });
-        break;
-      } catch (e) {
-        // try next
-      }
-    }
-
-    // Recreate cases
-    await codapRequest({
-      action: "create",
-      resource: `dataContext[${dcName}].collection[${colName}].case`,
-      values: window.SAMPLE_DATASET.cases
-    });
-
-    state.dataContextName = dcName;
-    state.collectionName = colName;
-    await loadAllCases();
-  }
-
-  // --- Wire up UI events ---
-  function wireUI() {
-    const bindRange = (id, key) => {
-      $(id).addEventListener("input", (e) => {
-        state[key] = parseFloat(e.target.value);
-        syncSliders();
-        updatePanel();
-        render(state.phase === "EVAL");
+        opt.value = name;
+        opt.textContent = name;
+        els.datasetSelect.appendChild(opt);
       });
-    };
-    bindRange("#w1", "w1");
-    bindRange("#w2", "w2");
-    bindRange("#c", "c");
-    bindRange("#lr", "learnRate");
-
-    $("#resetModelBtn").addEventListener("click", () => {
-      state.w1 = 0.4;
-      state.w2 = -0.4;
-      state.c = 2;
-      state.learnRate = 0.1;
-      syncSliders();
-      updatePanel();
-      render(state.phase === "EVAL");
-    });
-
-    $("#refreshBtn").addEventListener("click", refreshDatasetList);
-
-    $("#loadSampleBtn").addEventListener("click", async () => {
-      $("#dataStatus").textContent = "Loading sample dataset…";
-      try {
-        await loadOrResetSampleDataset();
-        $("#dataStatus").textContent = `Loaded sample dataset (${state.cases.length} cases).`;
-        updatePanel();
-        render(false);
-      } catch (e) {
-        console.error(e);
-        $("#dataStatus").textContent = "Failed to load sample dataset (see console).";
-      }
-    });
-
-    $("#datasetSelect").addEventListener("change", async (e) => {
-      const val = e.target.value;
-      if (val === "__sample__") {
-        $("#dataStatus").textContent = "Sample dataset selected. Click 'Load/Reset Sample Dataset' to create it in CODAP.";
-        return;
-      }
-      $("#dataStatus").textContent = `Attaching to dataset: ${val}…`;
-      try {
-        await attachToDatasetByName(val);
-        await loadAllCases();
-        $("#dataStatus").textContent = `Attached to ${val} (${state.cases.length} cases).`;
-        updatePanel();
-        render(false);
-      } catch (err) {
-        console.error(err);
-        $("#dataStatus").textContent = `Could not attach: ${err.message || "error"}`;
-      }
-    });
-
-    $("#btnCorrect").addEventListener("click", () => {
-      const ca = currentCase();
-      if (!ca) return;
-      const pt = { Cbest: +ca.values.Cbest, Cbad: +ca.values.Cbad };
-      const s = +ca.values.Sentiment;
-      if (predict(pt) !== s) {
-        showAlert("Check again! Does the current rule properly predict this point?");
-        return;
-      }
-      nextCase();
-    });
-
-    $("#btnFail").addEventListener("click", async () => {
-      const ca = currentCase();
-      if (!ca) return;
-      const pt = { Cbest: +ca.values.Cbest, Cbad: +ca.values.Cbad };
-      const s = +ca.values.Sentiment;
-
-      if (predict(pt) === s) {
-        showAlert("Check again! This point is already predicted correctly.");
-        return;
-      }
-
-      // Compute deltas & animate boundary shift
-      const d = deltas(pt, s);
-      const ghost = { w1: state.w1, w2: state.w2, c: state.c };
-      const newW = { w1: state.w1 + d.dw1, w2: state.w2 + d.dw2, c: state.c + d.dc };
-
-      $("#btnNextAfterImprove").disabled = true;
-      await animateBoundaryTo(newW, ghost, 650);
-      $("#btnNextAfterImprove").disabled = false;
-    });
-
-    $("#btnNextAfterImprove").addEventListener("click", () => {
-      $("#btnNextAfterImprove").disabled = true;
-      nextCase();
-    });
-
-    $("#evaluateBtn").addEventListener("click", () => {
-      if (!state.cases.length) return;
-      state.phase = "EVAL";
-      render(true);
-      const stats = evaluateAll();
-      $("#evalSummary").textContent =
-        `Cases: ${stats.n}\nAccuracy: ${(stats.acc * 100).toFixed(1)}%\nMSE: ${stats.mse.toFixed(3)}\n\nModel: w1=${fmt(state.w1)}  w2=${fmt(state.w2)}  c=${fmt(state.c)}`;
-      $("#evalDlg").showModal();
-    });
-
-    $("#evalClose").addEventListener("click", () => {
-      $("#evalDlg").close();
-      state.phase = "TRAIN_SINGLE";
-      render(false);
-      updatePanel();
-    });
-
-    $("#alertOk").addEventListener("click", () => $("#alertDlg").close());
   }
 
-  // --- Boot ---
-  async function boot() {
-    syncSliders();
-    wireUI();
-    render(false);
-    updatePanel();
+  async function refreshDatasetList() {
+    const names = await listCODAPDatasets();
+    setDatasetUIOptions(names);
+    setStatus(`Connected ✓  •  Found ${names.length} CODAP dataset(s)`);
+  }
 
-    try {
-      if (!window.CodapPluginApi) {
-        throw new Error("CodapPluginApi not found. Did you load codap-plugin-api.js in index.html?");
+  async function chooseDataset(name) {
+    currentDatasetName = name;
+
+    if (name === SAMPLE_NAME) {
+      // Don’t auto-create until they click Load/Reset;
+      // but if it already exists, we can use it.
+      const names = await listCODAPDatasets();
+      if (names.includes(SAMPLE_NAME)) {
+        cases = await loadDatasetCases(SAMPLE_NAME);
+      } else {
+        cases = [];
       }
-      codap = new CodapPluginApi();
-      await codap.init({ name: "Perceptron Trainer", title: "Perceptron Trainer" });
+    } else {
+      cases = await loadDatasetCases(name);
+    }
 
-      $("#dataStatus").textContent = "Connected to CODAP.";
-      $("#modelStatus").textContent = "Ready.";
-      await refreshDatasetList();
-    } catch (e) {
-      console.error(e);
-      $("#dataStatus").textContent = "Could not connect to CODAP. (Check index.html script include and open as a CODAP plugin.)";
-      $("#modelStatus").textContent = "Not connected.";
+    if (!cases.length) {
+      setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
+    } else {
+      // Ensure Sentiment is ±1
+      cases = cases.map(pt => ({
+        ...pt,
+        Sentiment: (pt.Sentiment >= 0 ? 1 : -1)
+      }));
+      curIndex = 0;
+      epoch = 0;
+      awaitingImprove = false;
+      showingAll = false;
+      setModelStatus(`Loaded ${cases.length} cases from "${name}".`);
+      renderViz();
+      updateCurrentPointPanel();
     }
   }
 
-  window.addEventListener("load", boot);
+  // ----------------------------
+  // Evaluation
+  // ----------------------------
+  function evaluateAll() {
+    if (!cases.length) return { acc: 0, mse: 0, n: 0 };
+
+    let correct = 0;
+    let sumSq = 0;
+    cases.forEach(pt => {
+      const s = scorePoint(pt);
+      const yhat = predFromScore(s);
+      if (yhat === pt.Sentiment) correct += 1;
+      const diff = (pt.Sentiment - s);
+      sumSq += diff * diff;
+    });
+
+    const n = cases.length;
+    return { acc: correct / n, mse: sumSq / n, n };
+  }
+
+  // ----------------------------
+  // Button logic: “student judges”
+  // ----------------------------
+  function studentSaysCorrect() {
+    const pt = cases[curIndex];
+    if (!pt) return;
+
+    const actuallyMistake = isMistake(pt);
+    if (actuallyMistake) {
+      showAlert("Check again! The current rule does NOT correctly predict this point.");
+      return;
+    }
+    advancePoint();
+  }
+
+  function studentSaysFail() {
+    const pt = cases[curIndex];
+    if (!pt) return;
+
+    const actuallyMistake = isMistake(pt);
+    if (!actuallyMistake) {
+      showAlert("Check again! The current rule DOES correctly predict this point.");
+      return;
+    }
+
+    // Apply perceptron update + show the deltas
+    const lr = Number(els.lr.value);
+    const sBefore = scorePoint(pt);
+    const y = pt.Sentiment;
+    const yhat = predFromScore(sBefore);
+
+    const deltas = perceptronUpdate(pt, lr);
+
+    // Reflect in sliders immediately (and redraw)
+    syncSlidersToModel();
+    renderViz();
+
+    els.deltaInfo.textContent =
+      `Mistake-driven update: y=${y}, ŷ=${yhat}, η=${lr.toFixed(2)}  →  ` +
+      `Δw1=${deltas.dw1.toFixed(3)}, Δw2=${deltas.dw2.toFixed(3)}, Δc=${deltas.dc.toFixed(3)}`;
+
+    awaitingImprove = true;
+    els.btnNextAfterImprove.disabled = false;
+    updateCurrentPointPanel();
+  }
+
+  function afterImproveNext() {
+    if (!awaitingImprove) return;
+    advancePoint();
+  }
+
+  function resetModel() {
+    model = { ...DEFAULT_MODEL };
+    syncSlidersToModel();
+    setModelStatus("Model reset to defaults.");
+    renderViz();
+    updateCurrentPointPanel();
+  }
+
+  function showEvaluationDialog() {
+    showingAll = true;
+    renderViz();
+    const r = evaluateAll();
+    lastEval = r;
+
+    els.evalSummary.textContent =
+      `Cases: ${r.n}   •   Accuracy: ${(100 * r.acc).toFixed(1)}%   •   MSE: ${r.mse.toFixed(3)}`;
+
+    if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.showModal();
+  }
+
+  // ----------------------------
+  // Boot
+  // ----------------------------
+  async function boot() {
+    updateSliderLabels();
+
+    els.alertOk.addEventListener("click", () => els.alertDlg.close());
+    els.evalClose.addEventListener("click", () => {
+      els.evalDlg.close();
+      showingAll = false;
+      renderViz();
+    });
+
+    // Slider live updates
+    [els.w1, els.w2, els.c, els.lr].forEach(inp => {
+      inp.addEventListener("input", () => {
+        updateSliderLabels();
+        if (inp !== els.lr) updateModelFromSliders();
+      });
+    });
+
+    // Buttons
+    els.resetModelBtn.addEventListener("click", resetModel);
+    els.evaluateBtn.addEventListener("click", showEvaluationDialog);
+    els.btnCorrect.addEventListener("click", studentSaysCorrect);
+    els.btnFail.addEventListener("click", studentSaysFail);
+    els.btnNextAfterImprove.addEventListener("click", afterImproveNext);
+
+    els.refreshBtn.addEventListener("click", async () => {
+      try {
+        await refreshDatasetList();
+      } catch (e) {
+        setStatus(`Error refreshing datasets: ${e.message}`);
+      }
+    });
+
+    els.loadSampleBtn.addEventListener("click", async () => {
+      try {
+        setStatus("Creating/resetting sample dataset in CODAP…");
+        const name = await createOrResetSampleDataset();
+        await refreshDatasetList();
+        els.datasetSelect.value = name;
+        await chooseDataset(name);
+        setStatus(`Sample dataset loaded ✓ (${cases.length} cases)`);
+      } catch (e) {
+        setStatus(`Error loading sample dataset: ${e.message}`);
+      }
+    });
+
+    els.datasetSelect.addEventListener("change", async () => {
+      try {
+        await chooseDataset(els.datasetSelect.value);
+      } catch (e) {
+        setModelStatus(`Dataset load error: ${e.message}`);
+      }
+    });
+
+    // Connect to CODAP
+    try {
+      setStatus("Connecting to CODAP…");
+      await connectToCODAP();
+      await refreshDatasetList();
+      // Default select “Sample Dataset”
+      els.datasetSelect.value = SAMPLE_NAME;
+      await chooseDataset(SAMPLE_NAME);
+
+      // Initial draw even if no cases yet
+      syncSlidersToModel();
+      renderViz();
+      updateCurrentPointPanel();
+    } catch (e) {
+      connected = false;
+      setStatus(`Not connected. Open this plugin *inside CODAP* using ?di=…  (${e.message})`);
+      // Still render something
+      syncSlidersToModel();
+      renderViz();
+    }
+  }
+
+  boot();
+
 })();
