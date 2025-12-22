@@ -94,7 +94,12 @@
       throw new Error("iframePhone not found. Make sure iframe-phone.js is loaded before plugin.js");
     }
 
-    phone = window.iframePhone.getIFrameEndpoint();
+    phone = new window.iframePhone.IframePhoneRpcEndpoint(
+  function () {},          // simple handler (we don't need incoming commands right now)
+  "data-interactive",
+  window.parent
+);
+
 
     // CODAP expects the plugin to "initialize" by telling it name/version/dimensions.
     // This is the standard handshake pattern for CODAP DI plugins.
