@@ -691,7 +691,16 @@
         setModelStatus(`Dataset load error: ${e.message}`);
       }
     });
+const toggle = document.querySelector("#toggleMath");
+const mathPanel = document.querySelector("#mathPanel");
 
+if (toggle && mathPanel) {
+  toggle.addEventListener("change", () => {
+    mathPanel.style.display = toggle.checked ? "block" : "none";
+  });
+}
+
+     
     // Connect to CODAP
     try {
       setStatus("Connecting to CODAP…");
