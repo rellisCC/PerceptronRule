@@ -5,9 +5,14 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Perceptron Trainer (CODAP Plugin)</title>
   <link rel="stylesheet" href="style.css"/>
-  <!-- iframe-phone is the transport layer used by CODAP plugins -->
-  <script src="https://concord-consortium.github.io/codap-plugin-api/dist/codap-plugin-api.js"></script>
+
+  <!-- IMPORTANT:
+       Use a local copy of iframe-phone.js (saved in your GitHub repo).
+       Do NOT use unpkg here if CSP blocks it.
+  -->
+  <script src="iframe-phone.js"></script>
 </head>
+
 <body>
   <header>
     <div class="title">Perceptron Trainer</div>
@@ -24,8 +29,9 @@
       </label>
 
       <div class="hint">
-        Choose <b>Sample Dataset</b> to auto-create starter data in CODAP, or select an existing dataset with columns
-        <code>x</code>, <code>y</code>, and <code>Sentiment</code> (values -1/+1).
+        Choose <b>Sample Dataset</b> and click <b>Load/Reset Sample Dataset</b> to create starter data in CODAP.
+        Or select an existing dataset that includes columns:
+        <code>Cbest</code>, <code>Cbad</code>, <code>Sentiment</code> (Sentiment should be -1/+1).
       </div>
 
       <div class="btnrow">
@@ -102,7 +108,7 @@
       </div>
 
       <div class="hint">
-        Tip: The shaded <b>orange</b> side is where the rule predicts <b>positive</b> (+1). Negative points are colored purple.
+        Tip: The shaded <b>orange</b> side is where the rule predicts <b>positive</b> (+1). Negative points are purple.
         Click <b>Evaluate model</b> to show all points and compute total error.
       </div>
     </div>
@@ -125,7 +131,9 @@
     </div>
   </dialog>
 
+  <!-- Sample dataset + plugin logic -->
   <script src="sample-data.js"></script>
   <script src="plugin.js"></script>
 </body>
 </html>
+
