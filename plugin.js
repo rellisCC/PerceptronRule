@@ -657,6 +657,23 @@
       try {
         setStatus("Creating/resetting sample dataset in CODAP…");
         const name = await createOrResetSampleDataset();
+         // Use the sample cases directly for the training view (don’t rely on reading back from CODAP yet)
+         cases = SAMPLE_SPEC.cases.map(row => ({
+           Cbest: Number(row.Cbest),
+           Cbad: Number(row.Cbad),
+           Sentiment: Number(row.Sentiment) >= 0 ? 1 : -1,
+           Text: row.Text || "",
+           ID: row.ID || ""
+         }));
+         
+         curIndex = 0;
+         epoch = 0;
+         awaitingImprove = false;
+         showingAll = false;
+         
+         setModelStatus(`Loaded ${cases.length} cases from "Sample Dataset".`);
+         renderViz();
+         updateCurrentPointPanel();
         await refreshDatasetList();
         els.datasetSelect.value = name;
         await chooseDataset(name);
