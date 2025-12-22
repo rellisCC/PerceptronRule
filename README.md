@@ -1,4 +1,4 @@
-# Perceptron Trainer CODAP Plugin (Starter)
+# Perceptron Trainer CODAP Plugin (Starter kit - Vibe Coded with ChatGPT 5.2)
 
 This is a lightweight CODAP Data Interactive Plugin that implements a one-point-at-a-time perceptron training workflow.
 
