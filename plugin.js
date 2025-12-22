@@ -90,26 +90,22 @@
   }
 
   async function connectToCODAP() {
-    if (!window.iframePhone || !window.iframePhone.getIFrameEndpoint) {
-      throw new Error("iframePhone not found. Make sure iframe-phone.js is loaded before plugin.js");
+    // Must be embedded in CODAP (iFrame). iframe-phone provides the RPC transport.
+    if (!window.iframePhone || !window.iframePhone.IframePhoneRpcEndpoint) {
+      throw new Error("iframePhone RPC not found. Make sure iframe-phone.js is loaded before plugin.js");
     }
 
-    phone = new window.iframePhone.IframePhoneRpcEndpoint(
-  function () {},          // simple handler (we don't need incoming commands right now)
-  "data-interactive",
-  window.parent
-);
+    // Create an RPC endpoint to CODAP (the parent frame).
+    // The handler is required by iframe-phone but we don't need to handle incoming calls here.
+    phone = new window.iframePhone.IframePhoneRpcEndpoint(function () {}, "data-interactive", window.parent);
 
-
-    // CODAP expects the plugin to "initialize" by telling it name/version/dimensions.
-    // This is the standard handshake pattern for CODAP DI plugins.
-    phone.initialize();
-
-    // A light “ping” request to verify CODAP is listening:
+    // Verify CODAP is listening:
     await codapRequest("get", "interactiveFrame");
+
     connected = true;
     setStatus("Connected to CODAP ✓");
   }
+
 
   // ----------------------------
   // Data model
