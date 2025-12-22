@@ -97,10 +97,17 @@
         <div><b>True sentiment</b>: <span class="mono" id="sentInfo">—</span></div>
           </div>
 
-        <div class="panel-row">
-          <div class="mono" id="deltaInfo"></div>
+        <div id="mathPanel" style="display:none;">
+          <div class="panel-row">
+            <div class="mono" id="deltaInfo"></div>
+          </div>
         </div>
+
       </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+          <input type="checkbox" id="toggleMath">
+          <span>Show learning math</span>
+        </label>
 
       <div class="btnrow">
         <button id="btnCorrect">Rule correctly predicts point. Proceed to next point.</button>
