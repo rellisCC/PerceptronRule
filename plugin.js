@@ -154,8 +154,12 @@
     if (!collections || !collections.length) throw new Error("No collections found in dataset.");
     const collName = collections[0].name;
 
-    const casesRes = await codapRequest("get", `dataContext[${datasetName}].collection[${collName}].caseFormulaSearch[*]`);
+    const casesRes = await codapRequest(
+  "get",
+  `dataContext[${datasetName}].collection[${collName}].allCases`
+);
     const found = (casesRes.values && casesRes.values.cases) ? casesRes.values.cases : [];
+
     // Normalize:
     return found.map(c => {
       const v = c.values || {};
