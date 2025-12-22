@@ -457,6 +457,7 @@
   }
 
   function advancePoint() {
+     els.btnFail.disabled = false;
     curIndex += 1;
     if (curIndex >= cases.length) {
       curIndex = 0;
@@ -589,6 +590,7 @@
 
     awaitingImprove = true;
     els.btnNextAfterImprove.disabled = false;
+    els.btnFail.disabled = true; 
     updateCurrentPointPanel();
   }
 
