@@ -62,7 +62,7 @@
     const col = (dc.values?.collections||[])[0];
     if(!col) throw new Error("No collections in dataset");
     const attrNames = new Set((col.attrs||[]).map(a=>a.name));
-    for(const req of ["x","y","Sentiment"]){
+    for(const req of ["Cbest","Cbad","Sentiment"]){
       if(!attrNames.has(req)) throw new Error(`Missing required attribute: ${req}`);
     }
     state.dataContextName=name;
@@ -77,8 +77,10 @@
     state.cases = raw.map(ca=>({
       id: ca.id,
       values: {
-        x:+(ca.values?.x ?? ca.case?.x ?? ca.x),
-        y:+(ca.values?.y ?? ca.case?.y ?? ca.y),
+        ID:(ca.values?.ID ?? ca.case?.ID ?? ca.ID),
+        Text:(ca.values?.Text ?? ca.case?.Text ?? ca.Text),
+        Cbest:+(ca.values?.Cbest ?? ca.case?.Cbest ?? ca.Cbest),
+        Cbad:+(ca.values?.Cbad ?? ca.case?.Cbad ?? ca.Cbad),
         Sentiment:+(ca.values?.Sentiment ?? ca.case?.Sentiment ?? ca.Sentiment)
       }
     }));
@@ -124,9 +126,9 @@
   }
 
   // ---- perceptron ----
-  const score=(pt)=> state.w1*pt.x + state.w2*pt.y + state.c;
+  const score=(pt)=> state.w1*pt.Cbest + state.w2*pt.Cbad + state.c;
   const pred=(pt)=> sign(score(pt));
-  const deltas=(pt,s)=>({dw1:state.learnRate*s*pt.x, dw2:state.learnRate*s*pt.y, dc:state.learnRate*s});
+  const deltas=(pt,s)=>({dw1:state.learnRate*s*pt.Cbest, dw2:state.learnRate*s*pt.Cbad, dc:state.learnRate*s});
   const currentCase=()=> state.cases.length ? state.cases[state.index % state.cases.length] : null;
 
   // ---- viz ----
@@ -213,10 +215,10 @@
     drawBoundary(state.w1,state.w2,state.c);
 
     if(showAll){
-      for(const ca of state.cases) drawPoint({x:ca.values.x,y:ca.values.y}, ca.values.Sentiment, 6);
+      for(const ca of state.cases) drawPoint({x:ca.values.Cbest,y:ca.values.Cbad}, ca.values.Sentiment, 6);
     } else {
       const ca=currentCase();
-      if(ca) drawPoint({x:ca.values.x,y:ca.values.y}, ca.values.Sentiment, 8);
+      if(ca) drawPoint({x:ca.values.Cbest,y:ca.values.Cbad}, ca.values.Sentiment, 8);
     }
   }
 
@@ -236,12 +238,12 @@
       $("#mistakeInfo").textContent="—"; $("#deltaInfo").textContent="";
       return;
     }
-    const pt={x:ca.values.x,y:ca.values.y};
+    const pt={Cbest:ca.values.Cbest,Cbad:ca.values.Cbad};
     const s=ca.values.Sentiment;
     const z=score(pt);
     const p=sign(z);
     const ok=p===s;
-    $("#ptInfo").textContent=`(${fmt(pt.x)}, ${fmt(pt.y)})`;
+    $("#ptInfo").textContent = `${ca.values.ID||""}  (Cbest=${fmt(pt.Cbest)}, Cbad=${fmt(pt.Cbad)})`;
     $("#indexInfo").textContent=`${(state.index%state.cases.length)+1}/${state.cases.length}`;
     $("#epochInfo").textContent=fmt(state.epoch);
     $("#scoreInfo").textContent=fmt(z);
@@ -286,7 +288,7 @@
   function evaluate(){
     let correct=0, mse=0;
     for(const ca of state.cases){
-      const x=ca.values.x, y=ca.values.y, s=ca.values.Sentiment;
+      const x=ca.values.Cbest, y=ca.values.Cbad, s=ca.values.Sentiment;
       const z=state.w1*x+state.w2*y+state.c;
       if(sign(z)===s) correct++;
       const e=s-z; mse += e*e;
@@ -314,14 +316,14 @@
 
     $("#btnCorrect").addEventListener("click",()=>{
       const ca=currentCase(); if(!ca) return;
-      const pt={x:ca.values.x,y:ca.values.y}; const s=ca.values.Sentiment;
+      const pt={Cbest:ca.values.Cbest,Cbad:ca.values.Cbad}; const s=ca.values.Sentiment;
       if(sign(score(pt))!==s) return alertCheck("Check again! Does the current rule properly predict this point?");
       nextCase();
     });
 
     $("#btnFail").addEventListener("click", async ()=>{
       const ca=currentCase(); if(!ca) return;
-      const pt={x:ca.values.x,y:ca.values.y}; const s=ca.values.Sentiment;
+      const pt={Cbest:ca.values.Cbest,Cbad:ca.values.Cbad}; const s=ca.values.Sentiment;
       if(sign(score(pt))===s) return alertCheck("Check again! This point is already predicted correctly.");
       const d=deltas(pt,s);
       const ghost={w1:state.w1,w2:state.w2,c:state.c};

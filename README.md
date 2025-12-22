@@ -1,4 +1,4 @@
-# Perceptron Trainer CODAP Plugin (Starter kit - Vibe Coded with ChatGPT 5.2)
+# Perceptron Trainer CODAP Plugin (Starter)
 
 This is a lightweight CODAP Data Interactive Plugin that implements a one-point-at-a-time perceptron training workflow.
 
@@ -13,8 +13,8 @@ This is a lightweight CODAP Data Interactive Plugin that implements a one-point-
   - MSE (mean squared error on raw score vs Sentiment)
 
 ## Required dataset columns (for student-created datasets)
-- x (numeric)
-- y (numeric)
+- Cbest (numeric)
+- Cbad (numeric)
 - Sentiment (numeric, should be -1 or +1)
 
 ## How to run (local)
