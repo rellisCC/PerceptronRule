@@ -81,7 +81,7 @@
   function codapRequest(action, resource, values) {
     ensurePhone();
     return new Promise((resolve, reject) => {
-      phone.sendRequest({ action, resource, values }, (result) => {
+      phone.call({ action, resource, values }, (result) => {
         if (!result) return reject(new Error("No response from CODAP."));
         if (result.success) resolve(result);
         else reject(new Error((result.values && result.values.error) || "CODAP request failed."));
