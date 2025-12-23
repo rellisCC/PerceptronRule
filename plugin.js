@@ -241,168 +241,322 @@
     return yhat !== pt.Sentiment;
   }
 
-  // ----------------------------
-  // Rendering (simple SVG)
-  // ----------------------------
-  function clearSVG() {
-    while (els.viz.firstChild) els.viz.removeChild(els.viz.firstChild);
+ // ----------------------------
+// Rendering (simple SVG) — improved axes/grid + fixed mins
+// ----------------------------
+
+function clearSVG() {
+  while (els.viz.firstChild) els.viz.removeChild(els.viz.firstChild);
+}
+
+// Keep mins fixed at -2 (teaching-friendly stable frame)
+const FIXED_MIN = -2;
+
+// Update AX bounds (call before rendering)
+function updateAxesBounds() {
+  // Default max if no data yet
+  let xMax = 2;
+  let yMax = 2;
+
+  // Consider all points we might show
+  const pts = cases && cases.length ? cases : [];
+  for (const pt of pts) {
+    if (typeof pt.Cbest === "number") xMax = Math.max(xMax, pt.Cbest);
+    if (typeof pt.Cbad === "number") yMax = Math.max(yMax, pt.Cbad);
   }
 
-  function sx(x) {
-    const { w, pad } = PLOT;
-    return pad + (x - AX.xmin) * (w - 2 * pad) / (AX.xmax - AX.xmin);
-  }
-  function sy(y) {
-    const { h, pad } = PLOT;
-    // SVG y goes down
-    return h - pad - (y - AX.ymin) * (h - 2 * pad) / (AX.ymax - AX.ymin);
-  }
+  // Add a little headroom so points don’t sit on the border
+  const xSpan = Math.max(1e-9, xMax - FIXED_MIN);
+  const ySpan = Math.max(1e-9, yMax - FIXED_MIN);
+  xMax += 0.10 * xSpan;
+  yMax += 0.10 * ySpan;
 
-  function svgEl(name, attrs) {
-    const el = document.createElementNS("http://www.w3.org/2000/svg", name);
-    Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, String(v)));
-    return el;
-  }
+  // Ensure max is at least a bit above min
+  xMax = Math.max(xMax, FIXED_MIN + 0.5);
+  yMax = Math.max(yMax, FIXED_MIN + 0.5);
 
-  function drawAxes() {
-    const g = svgEl("g", {});
-    // border
-    g.appendChild(svgEl("rect", {
-      x: PLOT.pad, y: PLOT.pad,
-      width: PLOT.w - 2 * PLOT.pad,
-      height: PLOT.h - 2 * PLOT.pad,
-      fill: "none",
-      stroke: "#bbb"
+  AX.xmin = FIXED_MIN;
+  AX.ymin = FIXED_MIN;
+  AX.xmax = xMax;
+  AX.ymax = yMax;
+}
+
+function sx(x) {
+  const { w, pad } = PLOT;
+  return pad + (x - AX.xmin) * (w - 2 * pad) / (AX.xmax - AX.xmin);
+}
+
+function sy(y) {
+  const { h, pad } = PLOT;
+  // SVG y goes down
+  return h - pad - (y - AX.ymin) * (h - 2 * pad) / (AX.ymax - AX.ymin);
+}
+
+function svgEl(name, attrs) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", name);
+  Object.entries(attrs || {}).forEach(([k, v]) => el.setAttribute(k, String(v)));
+  return el;
+}
+
+// Nice tick step selection (1, 2, 5 * 10^n)
+function niceStep(min, max, targetTicks = 6) {
+  const span = Math.max(1e-9, max - min);
+  const raw = span / targetTicks;
+  const pow10 = Math.pow(10, Math.floor(Math.log10(raw)));
+  const r = raw / pow10;
+  const mult = (r >= 5) ? 5 : (r >= 2) ? 2 : 1;
+  return mult * pow10;
+}
+
+function fmtTick(v) {
+  if (Math.abs(v) < 1e-9) return "0";
+  // trim trailing zeros
+  const s = String(+v.toFixed(3));
+  return s.replace(/\.?0+$/, "");
+}
+
+function drawAxes() {
+  const g = svgEl("g", {});
+
+  // Compute ticks
+  const xStep = niceStep(AX.xmin, AX.xmax, 6);
+  const yStep = niceStep(AX.ymin, AX.ymax, 6);
+
+  const xStart = Math.ceil(AX.xmin / xStep) * xStep;
+  const xEnd   = Math.floor(AX.xmax / xStep) * xStep;
+  const yStart = Math.ceil(AX.ymin / yStep) * yStep;
+  const yEnd   = Math.floor(AX.ymax / yStep) * yStep;
+
+  // Gridlines (light)
+  for (let x = xStart; x <= xEnd + 1e-9; x += xStep) {
+    g.appendChild(svgEl("line", {
+      x1: sx(x), y1: sy(AX.ymin),
+      x2: sx(x), y2: sy(AX.ymax),
+      stroke: "#eee",
+      "stroke-width": 1
     }));
-    els.viz.appendChild(g);
+  }
+  for (let y = yStart; y <= yEnd + 1e-9; y += yStep) {
+    g.appendChild(svgEl("line", {
+      x1: sx(AX.xmin), y1: sy(y),
+      x2: sx(AX.xmax), y2: sy(y),
+      stroke: "#eee",
+      "stroke-width": 1
+    }));
   }
 
-  function drawDecisionRegion() {
-    // Region where w1*Cbest + w2*Cbad + c >= 0 (orange)
-    // We approximate by filling polygon clipped to plot box.
-    const w1 = model.w1, w2 = model.w2, c = model.c;
+  // Axes at x=0 and y=0 (only if 0 lies within range)
+  if (AX.ymin <= 0 && AX.ymax >= 0) {
+    g.appendChild(svgEl("line", {
+      x1: sx(AX.xmin), y1: sy(0),
+      x2: sx(AX.xmax), y2: sy(0),
+      stroke: "#999",
+      "stroke-width": 1.25
+    }));
+  }
+  if (AX.xmin <= 0 && AX.xmax >= 0) {
+    g.appendChild(svgEl("line", {
+      x1: sx(0), y1: sy(AX.ymin),
+      x2: sx(0), y2: sy(AX.ymax),
+      stroke: "#999",
+      "stroke-width": 1.25
+    }));
+  }
 
-    // Line: w1 x + w2 y + c = 0  => y = -(w1/w2)x - c/w2 if w2 != 0
-    // We'll compute intersections with plot bounds and then fill the ">=0" side.
-    const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
+  // Plot border
+  g.appendChild(svgEl("rect", {
+    x: PLOT.pad, y: PLOT.pad,
+    width: PLOT.w - 2 * PLOT.pad,
+    height: PLOT.h - 2 * PLOT.pad,
+    fill: "none",
+    stroke: "#bbb",
+    "stroke-width": 1
+  }));
 
-    // sample corners, evaluate inequality:
-    const corners = [
-      { x: bx0, y: by0 }, { x: bx1, y: by0 },
-      { x: bx1, y: by1 }, { x: bx0, y: by1 }
-    ];
+  // Tick labels (bottom + left)
+  for (let x = xStart; x <= xEnd + 1e-9; x += xStep) {
+    const tx = svgEl("text", {
+      x: sx(x),
+      y: PLOT.h - PLOT.pad + 16,
+      "text-anchor": "middle",
+      "font-size": 11,
+      fill: "#444"
+    });
+    tx.textContent = fmtTick(x);
+    g.appendChild(tx);
+  }
 
-    function inside(p) {
-      return (w1 * p.x + w2 * p.y + c) >= 0;
-    }
+  for (let y = yStart; y <= yEnd + 1e-9; y += yStep) {
+    const ty = svgEl("text", {
+      x: PLOT.pad - 8,
+      y: sy(y) + 4,
+      "text-anchor": "end",
+      "font-size": 11,
+      fill: "#444"
+    });
+    ty.textContent = fmtTick(y);
+    g.appendChild(ty);
+  }
 
-    // Build polygon via half-plane clipping (Sutherland–Hodgman)
-    function clip(poly) {
-      let output = poly.slice();
-      // clip against the decision boundary half-plane directly by checking inside
-      // We clip against the half-plane, not the box (box already is our poly).
-      const input = output;
-      output = [];
-      for (let i = 0; i < input.length; i++) {
-        const A = input[i];
-        const B = input[(i + 1) % input.length];
-        const Ain = inside(A);
-        const Bin = inside(B);
+  els.viz.appendChild(g);
+}
 
-        if (Ain && Bin) {
-          output.push(B);
-        } else if (Ain && !Bin) {
-          // leaving: add intersection
-          const I = intersectSeg(A, B);
-          if (I) output.push(I);
-        } else if (!Ain && Bin) {
-          // entering: add intersection then B
-          const I = intersectSeg(A, B);
-          if (I) output.push(I);
-          output.push(B);
-        }
+function drawDecisionRegion() {
+  // Region where w1*Cbest + w2*Cbad + c >= 0 (orange)
+  // We approximate by filling polygon clipped to plot box.
+  const w1 = model.w1, w2 = model.w2, c = model.c;
+
+  const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
+
+  const corners = [
+    { x: bx0, y: by0 }, { x: bx1, y: by0 },
+    { x: bx1, y: by1 }, { x: bx0, y: by1 }
+  ];
+
+  function inside(p) {
+    return (w1 * p.x + w2 * p.y + c) >= 0;
+  }
+
+  function intersectSeg(A, B) {
+    const fA = w1 * A.x + w2 * A.y + c;
+    const fB = w1 * B.x + w2 * B.y + c;
+    const denom = (fA - fB);
+    if (denom === 0) return null;
+    const t = fA / denom;
+    if (t < 0 || t > 1) return null;
+    return { x: A.x + t * (B.x - A.x), y: A.y + t * (B.y - A.y) };
+  }
+
+  function clip(poly) {
+    const input = poly.slice();
+    const output = [];
+    for (let i = 0; i < input.length; i++) {
+      const A = input[i];
+      const B = input[(i + 1) % input.length];
+      const Ain = inside(A);
+      const Bin = inside(B);
+
+      if (Ain && Bin) {
+        output.push(B);
+      } else if (Ain && !Bin) {
+        const I = intersectSeg(A, B);
+        if (I) output.push(I);
+      } else if (!Ain && Bin) {
+        const I = intersectSeg(A, B);
+        if (I) output.push(I);
+        output.push(B);
       }
-      return output;
     }
-
-    // Intersection of segment with line w1 x + w2 y + c = 0
-    function intersectSeg(A, B) {
-      const fA = w1 * A.x + w2 * A.y + c;
-      const fB = w1 * B.x + w2 * B.y + c;
-      const denom = (fA - fB);
-      if (denom === 0) return null;
-      const t = fA / denom; // where f(t)=0 between A and B
-      if (t < 0 || t > 1) return null;
-      return { x: A.x + t * (B.x - A.x), y: A.y + t * (B.y - A.y) };
-    }
-
-    let poly = corners;
-    poly = clip(poly);
-
-    if (poly.length < 3) return;
-
-    const d = poly.map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x)} ${sy(p.y)}`).join(" ") + " Z";
-    els.viz.appendChild(svgEl("path", {
-      d,
-      fill: "rgba(255,165,0,0.25)",
-      stroke: "none"
-    }));
+    return output;
   }
 
-  function drawDecisionLine() {
-    const w1 = model.w1, w2 = model.w2, c = model.c;
-    const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
+  let poly = clip(corners);
+  if (poly.length < 3) return;
 
-    const pts = [];
+  const d = poly.map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x)} ${sy(p.y)}`).join(" ") + " Z";
+  els.viz.appendChild(svgEl("path", {
+    d,
+    fill: "rgba(255,165,0,0.25)",
+    stroke: "none"
+  }));
+}
 
-    // Intersections with x=bx0 and x=bx1
-    if (w2 !== 0) {
-      const y0 = (-c - w1 * bx0) / w2;
-      const y1 = (-c - w1 * bx1) / w2;
-      pts.push({ x: bx0, y: y0 }, { x: bx1, y: y1 });
-    } else if (w1 !== 0) {
-      // vertical line: x = -c/w1
-      const x = (-c) / w1;
-      pts.push({ x, y: by0 }, { x, y: by1 });
-    }
+// Clip a line segment in DATA space to the plot bounds (Liang–Barsky)
+function clipSegmentToBounds(A, B) {
+  const xMin = AX.xmin, xMax = AX.xmax, yMin = AX.ymin, yMax = AX.ymax;
+  let t0 = 0, t1 = 1;
+  const dx = B.x - A.x;
+  const dy = B.y - A.y;
 
-    // Clip to bounds by sampling endpoints and clipping visually (good enough for class range)
-    const A = pts[0], B = pts[1];
-
-    els.viz.appendChild(svgEl("line", {
-      x1: sx(A.x), y1: sy(A.y),
-      x2: sx(B.x), y2: sy(B.y),
-      stroke: "#333",
-      "stroke-width": 2
-    }));
-  }
-
-  function drawPoint(pt, isCurrent) {
-    const positive = (pt.Sentiment === 1);
-    const r = isCurrent ? 8 : 5;
-
-    els.viz.appendChild(svgEl("circle", {
-      cx: sx(pt.Cbest),
-      cy: sy(pt.Cbad),
-      r,
-      fill: positive ? "orange" : "purple",
-      opacity: isCurrent ? 1 : 0.65
-    }));
-  }
-
-  function renderViz() {
-    clearSVG();
-    drawDecisionRegion();
-    drawAxes();
-    drawDecisionLine();
-
-    if (showingAll) {
-      cases.forEach(pt => drawPoint(pt, false));
+  function clip(p, q) {
+    if (p === 0) return q >= 0;
+    const r = q / p;
+    if (p < 0) {
+      if (r > t1) return false;
+      if (r > t0) t0 = r;
     } else {
-      const pt = cases[curIndex];
-      if (pt) drawPoint(pt, true);
+      if (r < t0) return false;
+      if (r < t1) t1 = r;
     }
+    return true;
   }
+
+  if (
+    clip(-dx, A.x - xMin) &&
+    clip( dx, xMax - A.x) &&
+    clip(-dy, A.y - yMin) &&
+    clip( dy, yMax - A.y)
+  ) {
+    const C = { x: A.x + t0 * dx, y: A.y + t0 * dy };
+    const D = { x: A.x + t1 * dx, y: A.y + t1 * dy };
+    return [C, D];
+  }
+  return null;
+}
+
+function drawDecisionLine() {
+  const w1 = model.w1, w2 = model.w2, c = model.c;
+
+  // Build two far endpoints in DATA space, then clip to bounds
+  let A, B;
+
+  if (w2 !== 0) {
+    // y = (-c - w1 x)/w2 across xmin..xmax
+    A = { x: AX.xmin, y: (-c - w1 * AX.xmin) / w2 };
+    B = { x: AX.xmax, y: (-c - w1 * AX.xmax) / w2 };
+  } else if (w1 !== 0) {
+    // vertical line: x = -c/w1 across ymin..ymax
+    const x = (-c) / w1;
+    A = { x, y: AX.ymin };
+    B = { x, y: AX.ymax };
+  } else {
+    return; // degenerate
+  }
+
+  const clipped = clipSegmentToBounds(A, B);
+  if (!clipped) return;
+
+  const [C, D] = clipped;
+  els.viz.appendChild(svgEl("line", {
+    x1: sx(C.x), y1: sy(C.y),
+    x2: sx(D.x), y2: sy(D.y),
+    stroke: "#333",
+    "stroke-width": 2
+  }));
+}
+
+function drawPoint(pt, isCurrent) {
+  const positive = (pt.Sentiment === 1);
+  const r = isCurrent ? 8 : 5;
+
+  els.viz.appendChild(svgEl("circle", {
+    cx: sx(pt.Cbest),
+    cy: sy(pt.Cbad),
+    r,
+    fill: positive ? "orange" : "purple",
+    opacity: isCurrent ? 1 : 0.65
+  }));
+}
+
+function renderViz() {
+  // ensure bounds reflect latest cases, but keep fixed mins
+  updateAxesBounds();
+
+  clearSVG();
+
+  // draw in back-to-front order
+  drawDecisionRegion();
+  drawAxes();
+  drawDecisionLine();
+
+  if (showingAll) {
+    cases.forEach(pt => drawPoint(pt, false));
+  } else {
+    const pt = cases[curIndex];
+    if (pt) drawPoint(pt, true);
+  }
+}
+
 
   // ----------------------------
   // Training workflow UI
