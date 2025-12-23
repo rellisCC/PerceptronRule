@@ -32,3 +32,7 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
 .dlg-title { font-weight: 700; margin-bottom: 8px; }
 .dlg-body { color: #222; font-size: 13px; }
 .dlg-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+#mathCard {
+  max-height: 520px;
+  overflow-y: auto;
+}
