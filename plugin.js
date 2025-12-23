@@ -505,9 +505,7 @@ function drawDecisionLine() {
   function drawLineForParams(params, style) {
     const w1 = params.w1, w2 = params.w2, c = params.c;
 
-    // Build two far endpoints in DATA space, then clip to bounds
     let A, B;
-
     if (w2 !== 0) {
       A = { x: AX.xmin, y: (-c - w1 * AX.xmin) / w2 };
       B = { x: AX.xmax, y: (-c - w1 * AX.xmax) / w2 };
@@ -516,11 +514,11 @@ function drawDecisionLine() {
       A = { x, y: AX.ymin };
       B = { x, y: AX.ymax };
     } else {
-      return;
+      return null;
     }
 
     const clipped = clipSegmentToBounds(A, B);
-    if (!clipped) return;
+    if (!clipped) return null;
 
     const [C, D] = clipped;
     els.viz.appendChild(svgEl("line", {
@@ -528,24 +526,124 @@ function drawDecisionLine() {
       x2: sx(D.x), y2: sy(D.y),
       ...style
     }));
+
+    return clipped; // return segment in DATA space
   }
 
-  // 1) Old line (faded), if we have one saved from a learning step
+  function drawArrowStraight(x1, y1, x2, y2) {
+    els.viz.appendChild(svgEl("line", {
+      x1, y1, x2, y2,
+      stroke: "#000",
+      "stroke-width": 2
+    }));
+
+    const dx = x2 - x1, dy = y2 - y1;
+    const L = Math.hypot(dx, dy) || 1;
+    const ux = dx / L, uy = dy / L;
+
+    const size = 7, halfW = 4;
+    const bx = x2 - ux * size;
+    const by = y2 - uy * size;
+    const px = -uy, py = ux;
+
+    els.viz.appendChild(svgEl("polygon", {
+      points: `${x2},${y2} ${bx + px * halfW},${by + py * halfW} ${bx - px * halfW},${by - py * halfW}`,
+      fill: "#000"
+    }));
+  }
+
+  function drawArrowCurved(x1, y1, x2, y2, curveSign) {
+    const mx = (x1 + x2) / 2;
+    const my = (y1 + y2) / 2;
+    const vx = x2 - x1, vy = y2 - y1;
+    const len = Math.hypot(vx, vy) || 1;
+    const nx = -vy / len, ny = vx / len;
+
+    const k = 0.25 * len * curveSign;
+    const cx = mx + nx * k;
+    const cy = my + ny * k;
+
+    els.viz.appendChild(svgEl("path", {
+      d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`,
+      fill: "none",
+      stroke: "#000",
+      "stroke-width": 2
+    }));
+
+    const tx = x2 - cx, ty = y2 - cy;
+    const TL = Math.hypot(tx, ty) || 1;
+    const ux = tx / TL, uy = ty / TL;
+
+    const size = 7, halfW = 4;
+    const bx = x2 - ux * size;
+    const by = y2 - uy * size;
+    const px = -uy, py = ux;
+
+    els.viz.appendChild(svgEl("polygon", {
+      points: `${x2},${y2} ${bx + px * halfW},${by + py * halfW} ${bx - px * halfW},${by - py * halfW}`,
+      fill: "#000"
+    }));
+  }
+
+  // ---- draw old line + arrows if learning just happened ----
+  let oldSeg = null;
   if (model.prevLineActive && model.prevLine) {
-    drawLineForParams(model.prevLine, {
+    oldSeg = drawLineForParams(model.prevLine, {
       stroke: "#d97706",
       "stroke-width": 2,
       opacity: 0.25
     });
   }
 
-  // 2) Current line (bold)
-  drawLineForParams({ w1: model.w1, w2: model.w2, c: model.c }, {
+  // ---- draw new line (always) ----
+  const newParams = { w1: model.w1, w2: model.w2, c: model.c };
+  const newSeg = drawLineForParams(newParams, {
     stroke: "#d97706",
     "stroke-width": 3,
     opacity: 1
   });
+
+  // ---- arrows from old → new ----
+  if (oldSeg && newSeg) {
+    const [O1, O2] = oldSeg;
+
+    const ax = model.prevLine.w2, ay = -model.prevLine.w1;
+    const bx = model.w2, by = -model.w1;
+    const aL = Math.hypot(ax, ay) || 1;
+    const bL = Math.hypot(bx, by) || 1;
+    const cos = Math.abs((ax * bx + ay * by) / (aL * bL));
+    const isParallel = cos > 0.995;
+
+    const cross = ax * by - ay * bx;
+    const curveSign = cross >= 0 ? 1 : -1;
+
+    const W1 = model.w1, W2 = model.w2, Cc = model.c;
+    const denom = (W1 * W1 + W2 * W2) || 1;
+
+    for (const t of [0.25, 0.5, 0.75]) {
+      const P = {
+        x: O1.x + t * (O2.x - O1.x),
+        y: O1.y + t * (O2.y - O1.y)
+      };
+
+      const f = W1 * P.x + W2 * P.y + Cc;
+      const Q = {
+        x: P.x - (f * W1) / denom,
+        y: P.y - (f * W2) / denom
+      };
+
+      const x1 = sx(P.x), y1 = sy(P.y);
+      const x2 = sx(Q.x), y2 = sy(Q.y);
+
+      if (isParallel) {
+        drawArrowStraight(x1, y1, x2, y2);
+      } else {
+        drawArrowCurved(x1, y1, x2, y2, curveSign);
+      }
+    }
+  }
 }
+
 
 
 function drawPoint(pt, isCurrent) {
