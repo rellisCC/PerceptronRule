@@ -599,8 +599,9 @@ function fmtRule(w1, w2, c, bold=false) {
 }
 
 els.deltaInfo.innerHTML = `
-  <div class="mathline"><b>Old rule: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
-    <div class><br></br></div>
+  <div class="mathline"><b>Rule Formula: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ≥ 0</div>
+    <div class="mathline"><b>Old rule: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
+    
   <div class="mathblock">
     <div class="mathline"><b>w1 update</b></div>
     <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
@@ -611,16 +612,18 @@ els.deltaInfo.innerHTML = `
 
   <div class="mathblock">
     <div class="mathline"><b>w2 update</b></div>
-    <div class="mathline small">words: New w2 = Old w2 + LearnRate × TrueSentiment × Cbad</div>
-    <div class="mathline small">values: New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbad}</div>
-    <div class="mathline"><b>simplify:</b> New w2 = <b>${model.w2.toFixed(2)}</b></div>
+    <div class="mathline small">New w2 = Old w2 + LearnRate × TrueSentiment × Cbad</div>
+    <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbad}</div>
+    <div class="mathline small"><b>New w2 = ${model.w2.toFixed(2)}</b></div>
+    <div class><br></br></div>
   </div>
 
   <div class="mathblock">
-    <div class="mathline"><b>c (bias) update</b></div>
-    <div class="mathline small">words: New c = Old c + LearnRate × TrueSentiment</div>
-    <div class="mathline small">values: New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
-    <div class="mathline"><b>simplify:</b> New c = <b>${model.c.toFixed(2)}</b></div>
+    <div class="mathline"><b>c update</b></div>
+    <div class="mathline small">New c = Old c + LearnRate × TrueSentiment</div>
+    <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
+    <div class="mathline small"><b> New c = ${model.c.toFixed(2)}</b></div>
+    <div class><br></br></div>
   </div>
 
   <div class="mathline"><b>New rule</b>: ${fmtRule(model.w1, model.w2, model.c, true)}</div>
