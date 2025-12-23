@@ -216,10 +216,12 @@
 const SCORE_EPS = 1e-9;
 
 function predFromScore(s) {
-  // predicts +1 when s >= 0 (line counts as positive)
-  // allow tiny floating-point negatives to still count as "on the line"
-  return s >= -SCORE_EPS ? 1 : -1;
+  // Treat points *on the line* as positive.
+  // Also treat tiny floating-point negatives as "on the line".
+  const EPS = 1e-6;
+  return s >= -EPS ? 1 : -1;
 }
+
 
 
   function perceptronUpdate(pt, lr) {
