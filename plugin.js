@@ -115,7 +115,7 @@
 
   // Training state
   let currentDatasetName = null;
-  let cases = []; // [{id, Cbest, Cbad, Sentiment}]
+  let cases = []; // [{id, feat1, feat2, Sentiment}]
   let curIndex = 0;
   let epoch = 0;
   let showingAll = false;
@@ -132,8 +132,8 @@
   // Expects sample-data.js defines SAMPLE_DATASETS array
   // with a dataset having:
   //   name: "Sample Dataset"
-  //   attrs: [{name:"Cbest"}, {name:"Cbad"}, {name:"Sentiment"}]
-  //   cases: [{Cbest:0,Cbad:2,Sentiment:-1, Text:"..."}, ...]  (Text optional)
+  //   attrs: [{name:"feat1"}, {name:"feat2"}, {name:"Sentiment"}]
+  //   cases: [{feat1:0,feat2:2,Sentiment:-1, Text:"..."}, ...]  (Text optional)
   const SAMPLE_NAME = "Sample Dataset";
   const SAMPLE_SPEC = (window.SAMPLE_DATASETS || []).find(d => d.name === SAMPLE_NAME);
 
@@ -165,8 +165,8 @@
       const v = c.values || {};
       return {
         id: c.id,
-        Cbest: Number(v.Cbest ?? v.x ?? 0),
-        Cbad: Number(v.Cbad ?? v.y ?? 0),
+        feat1: Number(v.feat1 ?? v.x ?? 0),
+        feat2: Number(v.feat2 ?? v.y ?? 0),
         Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
         Text: v.Text ?? v.text ?? ""
       };
@@ -211,7 +211,7 @@
   // Perceptron math
   // ----------------------------
   function scorePoint(pt) {
-    return model.w1 * pt.Cbest + model.w2 * pt.Cbad + model.c;
+    return model.w1 * pt.feat1 + model.w2 * pt.feat2 + model.c;
   }
 const SCORE_EPS = 1e-6;
 
@@ -231,8 +231,8 @@ function predFromScore(s) {
     // w <- w + lr * y * x
     // c <- c + lr * y
     const y = pt.Sentiment;
-    const dw1 = lr * y * pt.Cbest;
-    const dw2 = lr * y * pt.Cbad;
+    const dw1 = lr * y * pt.feat1;
+    const dw2 = lr * y * pt.feat2;
     const dc = lr * y;
 
     model.w1 += dw1;
@@ -268,8 +268,8 @@ function updateAxesBounds() {
   // Consider all points we might show
   const pts = cases && cases.length ? cases : [];
   for (const pt of pts) {
-    if (typeof pt.Cbest === "number") xMax = Math.max(xMax, pt.Cbest);
-    if (typeof pt.Cbad === "number") yMax = Math.max(yMax, pt.Cbad);
+    if (typeof pt.feat1 === "number") xMax = Math.max(xMax, pt.feat1);
+    if (typeof pt.feat2 === "number") yMax = Math.max(yMax, pt.feat2);
   }
 
   // Add a little headroom so points don’t sit on the border
@@ -409,7 +409,7 @@ function drawAxes() {
 }
 
 function drawDecisionRegion() {
-  // Region where w1*Cbest + w2*Cbad + c >= 0 (orange)
+  // Region where w1*feat1 + w2*feat2 + c >= 0 (orange)
   // We approximate by filling polygon clipped to plot box.
   const w1 = model.w1, w2 = model.w2, c = model.c;
 
@@ -539,7 +539,7 @@ function drawDecisionLine() {
     const w1 = fmt(params.w1);
     const w2 = fmt(params.w2);
     const c  = fmt(params.c);
-    return `${w1}·Cbest + ${w2}·Cbad + ${c} ≥ 0`;
+    return `${w1}·feat1 + ${w2}·feat2 + ${c} ≥ 0`;
   }
 
   function placeLabel(seg, text, opts) {
@@ -806,8 +806,8 @@ function drawPoint(pt, isCurrent) {
   const r = isCurrent ? 8 : 5;
 
   els.viz.appendChild(svgEl("circle", {
-    cx: sx(pt.Cbest),
-    cy: sy(pt.Cbad),
+    cx: sx(pt.feat1),
+    cy: sy(pt.feat2),
     r,
     fill: positive ? "orange" : "purple",
     opacity: isCurrent ? 1 : 0.65
@@ -815,8 +815,8 @@ function drawPoint(pt, isCurrent) {
  
    // ID label
   els.viz.appendChild(svgEl("text", {
-    x: sx(pt.Cbest) + (isCurrent ? 10 : 8),
-    y: sy(pt.Cbad) - (isCurrent ? 10 : 8),
+    x: sx(pt.feat1) + (isCurrent ? 10 : 8),
+    y: sy(pt.feat2) - (isCurrent ? 10 : 8),
     "font-size": isCurrent ? 13 : 11,
     "font-weight": isCurrent ? 700 : 400,
     fill: "#111",
@@ -882,7 +882,7 @@ function renderViz() {
     const yhat = predFromScore(s);
     const mistake = (yhat !== pt.Sentiment);
 
-    els.ptInfo.textContent = `(${pt.Cbest}, ${pt.Cbad})`;
+    els.ptInfo.textContent = `(${pt.feat1}, ${pt.feat2})`;
     els.epochInfo.textContent = String(epoch);
     els.indexInfo.textContent = String(curIndex + 1) + " / " + String(cases.length);
 
@@ -1036,7 +1036,7 @@ function fmtRule(w1, w2, c, bold=false) {
   const cs  = b(c.toFixed(2));
   const w2sign = (w2 >= 0) ? " + " : " − ";
   const csign  = (c  >= 0) ? " + " : " − ";
-  return `${w1s}·Cbest${w2sign}${b(Math.abs(w2).toFixed(2))}·Cbad${csign}${b(Math.abs(c).toFixed(2))} ≥ 0`;
+  return `${w1s}·feat1${w2sign}${b(Math.abs(w2).toFixed(2))}·feat2${csign}${b(Math.abs(c).toFixed(2))} ≥ 0`;
 }
 
 els.deltaInfo.innerHTML = `
@@ -1045,15 +1045,15 @@ els.deltaInfo.innerHTML = `
     
   <div class="mathblock">
     <div class="mathline"><b>w1 shift</b></div>
-    <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
-    <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbest}</div>
+    <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × feat1</div>
+    <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat1}</div>
     <div class="mathline small"><b> New w1 = ${model.w1.toFixed(2)}</b></div>
   </div>
 
   <div class="mathblock">
     <div class="mathline"><b>w2 shift</b></div>
-    <div class="mathline small">New w2 = Old w2 + LearnRate × TrueSentiment × Cbad</div>
-    <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbad}</div>
+    <div class="mathline small">New w2 = Old w2 + LearnRate × TrueSentiment × feat2</div>
+    <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat2}</div>
     <div class="mathline small"><b>New w2 = ${model.w2.toFixed(2)}</b></div>
   </div>
 
@@ -1141,8 +1141,8 @@ els.deltaInfo.innerHTML = `
         const name = await createOrResetSampleDataset();
          // Use the sample cases directly for the training view (don’t rely on reading back from CODAP yet)
          cases = SAMPLE_SPEC.cases.map(row => ({
-           Cbest: Number(row.Cbest),
-           Cbad: Number(row.Cbad),
+           feat1: Number(row.feat1),
+           feat2: Number(row.feat2),
            Sentiment: Number(row.Sentiment) >= 0 ? 1 : -1,
            Text: row.Text || "",
            ID: row.ID || ""
