@@ -641,6 +641,8 @@ function drawDecisionLine() {
   });
   t.textContent = text;
   els.viz.appendChild(t);
+
+  return t
 }
 
 
@@ -699,29 +701,62 @@ function drawDecisionLine() {
     }));
   }
 
-  // ---- draw old line + label + arrows if learning just happened ----
-  let oldSeg = null;
-  if (model.prevLineActive && model.prevLine) {
-    oldSeg = drawLineForParams(model.prevLine, {
-      stroke: "#d97706",
-      "stroke-width": 2,
-      opacity: 0.25
-    });
-    if (oldSeg) {
-      placeLabel(oldSeg, labelForParams(model.prevLine), { fill: "#111", opacity: 0.35, anchor: "rightExit"  });
-    }
-  }
+// ---- draw old line + label + arrows if learning just happened ----
+let oldSeg = null;
+let oldLabel = null;
 
-  // ---- draw new line + label (always) ----
-  const newParams = { w1: model.w1, w2: model.w2, c: model.c };
-  const newSeg = drawLineForParams(newParams, {
+if (model.prevLineActive && model.prevLine) {
+  oldSeg = drawLineForParams(model.prevLine, {
     stroke: "#d97706",
-    "stroke-width": 3,
-    opacity: 1
+    "stroke-width": 2,
+    opacity: 0.25
   });
-  if (newSeg) {
-    placeLabel(newSeg, labelForParams(newParams), { fill: "#111", opacity: 1, bold: true, anchor: "yIntercept"});
+  if (oldSeg) {
+    oldLabel = placeLabel(
+      oldSeg,
+      labelForParams(model.prevLine),
+      { fill: "#111", opacity: 0.35, anchor: "rightExit" }
+    );
   }
+}
+
+// ---- draw new line + label (always) ----
+const newParams = { w1: model.w1, w2: model.w2, c: model.c };
+const newSeg = drawLineForParams(newParams, {
+  stroke: "#d97706",
+  "stroke-width": 3,
+  opacity: 1
+});
+
+let newLabel = null;
+if (newSeg) {
+  newLabel = placeLabel(
+    newSeg,
+    labelForParams(newParams),
+    { fill: "#111", opacity: 1, bold: true, anchor: "yIntercept" }
+  );
+}
+
+// ---- resolve label overlap ----
+if (oldLabel && newLabel) {
+  for (let i = 0; i < 6; i++) {
+    const a = oldLabel.getBBox();
+    const b = newLabel.getBBox();
+
+    const overlap =
+      a.x < b.x + b.width &&
+      a.x + a.width > b.x &&
+      a.y < b.y + b.height &&
+      a.y + a.height > b.y;
+
+    if (!overlap) break;
+
+    oldLabel.setAttribute(
+      "y",
+      String(+oldLabel.getAttribute("y") + 14)
+    );
+  }
+}
 
   // ---- arrows from old → new ----
   if (oldSeg && newSeg) {
