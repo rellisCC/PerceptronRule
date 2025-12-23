@@ -213,12 +213,11 @@
   function scorePoint(pt) {
     return model.w1 * pt.Cbest + model.w2 * pt.Cbad + model.c;
   }
-const SCORE_EPS = 1e-9;
+const SCORE_EPS = 1e-6;
 
 function predFromScore(s) {
   // Treat points *on the line* as positive.
   // Also treat tiny floating-point negatives as "on the line".
-  const EPS = 1e-6;
   return s >= -EPS ? 1 : -1;
 }
 
