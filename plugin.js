@@ -696,7 +696,7 @@ const mathCard = document.querySelector("#mathCard");
 
 if (toggle && mathCard) {
   toggle.addEventListener("change", () => {
-    mathPanel.style.display = toggle.checked ? "block" : "none";
+    mathCard.style.display = toggle.checked ? "block" : "none";
   });
 }
 
