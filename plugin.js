@@ -607,7 +607,6 @@ els.deltaInfo.innerHTML = `
     <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
     <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbest}</div>
     <div class="mathline small"><b> New w1 = ${model.w1.toFixed(2)}</b></div>
-    <br></br>
   </div>
 
   <div class="mathblock">
@@ -615,7 +614,6 @@ els.deltaInfo.innerHTML = `
     <div class="mathline small">New w2 = Old w2 + LearnRate × TrueSentiment × Cbad</div>
     <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbad}</div>
     <div class="mathline small"><b>New w2 = ${model.w2.toFixed(2)}</b></div>
-     <br></br>
   </div>
 
   <div class="mathblock">
@@ -623,7 +621,6 @@ els.deltaInfo.innerHTML = `
     <div class="mathline small">New c = Old c + LearnRate × TrueSentiment</div>
     <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
     <div class="mathline small"><b> New c = ${model.c.toFixed(2)}</b></div>
-     <br></br>
   </div>
 
   <div class="mathline"><b>New rule</b>: ${fmtRule(model.w1, model.w2, model.c, true)}</div>
