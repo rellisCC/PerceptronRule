@@ -584,9 +584,47 @@
     syncSlidersToModel();
     renderViz();
 
-    els.deltaInfo.textContent =
-      `Mistake-driven update: y=${y}, ŷ=${yhat}, η=${lr.toFixed(2)}  →  ` +
-      `Δw1=${deltas.dw1.toFixed(3)}, Δw2=${deltas.dw2.toFixed(3)}, Δc=${deltas.dc.toFixed(3)}`;
+    const w1Old = model.w1 - deltas.dw1;
+const w2Old = model.w2 - deltas.dw2;
+const cOld  = model.c  - deltas.dc;
+
+function fmtRule(w1, w2, c, bold=false) {
+  const b = (s) => bold ? `<b>${s}</b>` : s;
+  const w1s = b(w1.toFixed(2));
+  const w2s = b(w2.toFixed(2));
+  const cs  = b(c.toFixed(2));
+  const w2sign = (w2 >= 0) ? " + " : " − ";
+  const csign  = (c  >= 0) ? " + " : " − ";
+  return `${w1s}·Cbest${w2sign}${b(Math.abs(w2).toFixed(2))}·Cbad${csign}${b(Math.abs(c).toFixed(2))} ≥ 0`;
+}
+
+els.deltaInfo.innerHTML = `
+  <div class="mathline"><b>Old rule</b>: ${fmtRule(w1Old, w2Old, cOld, false)}</div>
+
+  <div class="mathblock">
+    <div class="mathline"><b>w1 update</b></div>
+    <div class="mathline small">words: New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
+    <div class="mathline small">values: New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbest}</div>
+    <div class="mathline"><b>simplify:</b> New w1 = <b>${model.w1.toFixed(2)}</b></div>
+  </div>
+
+  <div class="mathblock">
+    <div class="mathline"><b>w2 update</b></div>
+    <div class="mathline small">words: New w2 = Old w2 + LearnRate × TrueSentiment × Cbad</div>
+    <div class="mathline small">values: New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbad}</div>
+    <div class="mathline"><b>simplify:</b> New w2 = <b>${model.w2.toFixed(2)}</b></div>
+  </div>
+
+  <div class="mathblock">
+    <div class="mathline"><b>c (bias) update</b></div>
+    <div class="mathline small">words: New c = Old c + LearnRate × TrueSentiment</div>
+    <div class="mathline small">values: New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
+    <div class="mathline"><b>simplify:</b> New c = <b>${model.c.toFixed(2)}</b></div>
+  </div>
+
+  <div class="mathline"><b>New rule</b>: ${fmtRule(model.w1, model.w2, model.c, true)}</div>
+`;
+
 
     awaitingImprove = true;
     els.btnNextAfterImprove.disabled = false;
