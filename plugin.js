@@ -543,33 +543,106 @@ function drawDecisionLine() {
   }
 
   function placeLabel(seg, text, opts) {
-    // Place near the middle of the segment with a slight normal offset
-    const [P, Q] = seg;
-    const mx = (sx(P.x) + sx(Q.x)) / 2;
-    const my = (sy(P.y) + sy(Q.y)) / 2;
+  const [P, Q] = seg;
 
-    const vx = sx(Q.x) - sx(P.x);
-    const vy = sy(Q.y) - sy(P.y);
-    const len = Math.hypot(vx, vy) || 1;
+  // line direction in screen space (for a small offset so text doesn't sit on the line)
+  const vx = sx(Q.x) - sx(P.x);
+  const vy = sy(Q.y) - sy(P.y);
+  const len = Math.hypot(vx, vy) || 1;
+  const nx = -vy / len;
+  const ny =  vx / len;
 
-    // normal direction
-    const nx = -vy / len;
-    const ny =  vx / len;
-
-    const offset = 12;
-    const x = mx + nx * offset;
-    const y = my + ny * offset;
-
-    const t = svgEl("text", {
-      x, y,
-      "text-anchor": "middle",
-      "font-size": 12,
-      fill: opts.fill || "#111",
-      opacity: opts.opacity ?? 1
-    });
-    t.textContent = text;
-    els.viz.appendChild(t);
+  function inBoundsData(pt) {
+    return pt.x >= AX.xmin - 1e-9 && pt.x <= AX.xmax + 1e-9 &&
+           pt.y >= AX.ymin - 1e-9 && pt.y <= AX.ymax + 1e-9;
   }
+
+  // Helper: get y on the (DATA-space) line at a given x by interpolating along the segment
+  function yAtX(x) {
+    const dx = Q.x - P.x;
+    if (Math.abs(dx) < 1e-12) return null; // vertical in data space
+    const t = (x - P.x) / dx;
+    return P.y + t * (Q.y - P.y);
+  }
+
+  // Helper: get x on the line at a given y
+  function xAtY(y) {
+    const dy = Q.y - P.y;
+    if (Math.abs(dy) < 1e-12) return null; // horizontal in data space
+    const t = (y - P.y) / dy;
+    return P.x + t * (Q.x - P.x);
+  }
+
+  let anchor = null;
+
+  if (opts.anchor === "yIntercept") {
+    // Prefer y-intercept at x=0
+    const y0 = yAtX(0);
+    if (y0 !== null) {
+      const cand = { x: 0, y: y0 };
+      if (inBoundsData(cand)) anchor = cand;
+    }
+    // Fallback: left edge exit (x = AX.xmin)
+    if (!anchor) {
+      const yL = yAtX(AX.xmin);
+      if (yL !== null) {
+        const cand = { x: AX.xmin, y: yL };
+        if (inBoundsData(cand)) anchor = cand;
+      }
+    }
+  } else if (opts.anchor === "rightExit") {
+    // Prefer right edge exit at x = AX.xmax
+    const yR = yAtX(AX.xmax);
+    if (yR !== null) {
+      const cand = { x: AX.xmax, y: yR };
+      if (inBoundsData(cand)) anchor = cand;
+    }
+    // Fallbacks: top/bottom edge exits
+    if (!anchor) {
+      const xT = xAtY(AX.ymax);
+      if (xT !== null) {
+        const cand = { x: xT, y: AX.ymax };
+        if (inBoundsData(cand)) anchor = cand;
+      }
+    }
+    if (!anchor) {
+      const xB = xAtY(AX.ymin);
+      if (xB !== null) {
+        const cand = { x: xB, y: AX.ymin };
+        if (inBoundsData(cand)) anchor = cand;
+      }
+    }
+  }
+
+  // Ultimate fallback: midpoint
+  if (!anchor) {
+    anchor = { x: (P.x + Q.x) / 2, y: (P.y + Q.y) / 2 };
+  }
+
+  // Apply small normal offset + keep inside padding
+  const offset = 14;
+  let x = sx(anchor.x) + nx * offset;
+  let y = sy(anchor.y) + ny * offset;
+
+  const minX = PLOT.pad + 6;
+  const maxX = PLOT.w - PLOT.pad - 6;
+  const minY = PLOT.pad + 14;
+  const maxY = PLOT.h - PLOT.pad - 6;
+  x = Math.min(maxX, Math.max(minX, x));
+  y = Math.min(maxY, Math.max(minY, y));
+
+  const t = svgEl("text", {
+    x, y,
+    "text-anchor": "start",
+    "font-size": 12,
+    "font-weight": opts.bold ? 700 : 400,
+    fill: opts.fill || "#111",
+    opacity: opts.opacity ?? 1
+  });
+  t.textContent = text;
+  els.viz.appendChild(t);
+}
+
 
   function drawArrowStraight(x1, y1, x2, y2) {
     els.viz.appendChild(svgEl("line", {
