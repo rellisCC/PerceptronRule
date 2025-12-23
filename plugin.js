@@ -692,9 +692,9 @@
       }
     });
 const toggle = document.querySelector("#toggleMath");
-const mathPanel = document.querySelector("#mathPanel");
+const mathCard = document.querySelector("#mathCard");
 
-if (toggle && mathPanel) {
+if (toggle && mathCard) {
   toggle.addEventListener("change", () => {
     mathPanel.style.display = toggle.checked ? "block" : "none";
   });
