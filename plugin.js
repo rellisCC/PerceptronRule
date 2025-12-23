@@ -708,7 +708,7 @@ function drawDecisionLine() {
       opacity: 0.25
     });
     if (oldSeg) {
-      placeLabel(oldSeg, labelForParams(model.prevLine), { fill: "#111", opacity: 0.35 });
+      placeLabel(oldSeg, labelForParams(model.prevLine), { fill: "#111", opacity: 0.35, anchor: "rightExit"  });
     }
   }
 
@@ -720,7 +720,7 @@ function drawDecisionLine() {
     opacity: 1
   });
   if (newSeg) {
-    placeLabel(newSeg, labelForParams(newParams), { fill: "#111", opacity: 1 });
+    placeLabel(newSeg, labelForParams(newParams), { fill: "#111", opacity: 1, bold: true, anchor: "yIntercept"});
   }
 
   // ---- arrows from old → new ----
