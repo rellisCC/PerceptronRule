@@ -76,50 +76,53 @@
     </div>
   </section>
 
-  <section class="row">
-    <div class="card grow">
-      <div class="card-title">Training View</div>
+  <section class="row" style="flex-wrap:nowrap; align-items:flex-start;">
 
-      <div class="viz-wrap">
-        <svg id="viz" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet"></svg>
+  <!-- LEFT: graph + point info + buttons -->
+  <div class="card" style="flex:1; min-width:560px;">
+    <div class="card-title">Training View</div>
+
+    <div class="viz-wrap">
+      <svg id="viz" viewBox="0 0 600 400" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div class="panel">
+      <div class="panel-row">
+        <div><b>Current point</b>: <span class="mono" id="ptInfo">—</span></div>
+        <div><b>Epoch</b>: <span class="mono" id="epochInfo">0</span> &nbsp; <b>Index</b>: <span class="mono" id="indexInfo">—</span></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-row">
-          <div><b>Current point</b>: <span class="mono" id="ptInfo">—</span></div>
-          <div><b>Epoch</b>: <span class="mono" id="epochInfo">0</span> &nbsp; <b>Index</b>: <span class="mono" id="indexInfo">—</span></div>
-        </div>
-        <div class="panel-row">
-          <div class="panel-row">
-          <div><b>Model prediction</b>: <span class="mono" id="predInfo">—</span></div>
-          </div>
-        <div class="panel-row">
+      <div class="panel-row">
+        <div><b>Model prediction</b>: <span class="mono" id="predInfo">—</span></div>
         <div><b>True sentiment</b>: <span class="mono" id="sentInfo">—</span></div>
-          </div>
-        <div class="card" id="mathCard" style="display:none; width: 420px;">
-          <div class="card-title">Learning Math</div>
-          <div class="mono" id="deltaInfo"></div>
-        </div>
-
-
-      </div>
-        <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-          <input type="checkbox" id="toggleMath">
-          <span>Show learning math</span>
-        </label>
-
-      <div class="btnrow">
-        <button id="btnCorrect">Rule correctly predicts point. Proceed to next point.</button>
-        <button id="btnFail">Rule fails. Must improve!</button>
-        <button id="btnNextAfterImprove" disabled>Rule improved. Check next point.</button>
-      </div>
-
-      <div class="hint">
-        Tip: The shaded <b>orange</b> side is where the rule predicts <b>positive</b> (+1). Negative points are purple.
-        Click <b>Evaluate model</b> to show all points and compute total error.
       </div>
     </div>
-  </section>
+
+    <label style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+      <input type="checkbox" id="toggleMath">
+      <span>Show learning math</span>
+    </label>
+
+    <div class="btnrow">
+      <button id="btnCorrect">Rule correctly predicts point. Proceed to next point.</button>
+      <button id="btnFail">Rule fails. Must improve!</button>
+      <button id="btnNextAfterImprove" disabled>Rule improved. Check next point.</button>
+    </div>
+
+    <div class="hint">
+      Tip: The shaded <b>orange</b> side is where the rule predicts <b>positive</b> (+1). Negative points are purple.
+      Click <b>Evaluate model</b> to show all points and compute total error.
+    </div>
+  </div>
+
+  <!-- RIGHT: learning math card -->
+  <div class="card" id="mathCard" style="display:none; width:420px; max-height:640px; overflow:auto;">
+    <div class="card-title">Learning Math</div>
+    <div class="mono" id="deltaInfo"></div>
+  </div>
+
+</section>
+
 
   <dialog id="alertDlg">
     <div class="dlg-title">Check again!</div>
