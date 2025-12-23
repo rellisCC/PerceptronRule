@@ -502,35 +502,51 @@ function clipSegmentToBounds(A, B) {
 }
 
 function drawDecisionLine() {
-  const w1 = model.w1, w2 = model.w2, c = model.c;
+  function drawLineForParams(params, style) {
+    const w1 = params.w1, w2 = params.w2, c = params.c;
 
-  // Build two far endpoints in DATA space, then clip to bounds
-  let A, B;
+    // Build two far endpoints in DATA space, then clip to bounds
+    let A, B;
 
-  if (w2 !== 0) {
-    // y = (-c - w1 x)/w2 across xmin..xmax
-    A = { x: AX.xmin, y: (-c - w1 * AX.xmin) / w2 };
-    B = { x: AX.xmax, y: (-c - w1 * AX.xmax) / w2 };
-  } else if (w1 !== 0) {
-    // vertical line: x = -c/w1 across ymin..ymax
-    const x = (-c) / w1;
-    A = { x, y: AX.ymin };
-    B = { x, y: AX.ymax };
-  } else {
-    return; // degenerate
+    if (w2 !== 0) {
+      A = { x: AX.xmin, y: (-c - w1 * AX.xmin) / w2 };
+      B = { x: AX.xmax, y: (-c - w1 * AX.xmax) / w2 };
+    } else if (w1 !== 0) {
+      const x = (-c) / w1;
+      A = { x, y: AX.ymin };
+      B = { x, y: AX.ymax };
+    } else {
+      return;
+    }
+
+    const clipped = clipSegmentToBounds(A, B);
+    if (!clipped) return;
+
+    const [C, D] = clipped;
+    els.viz.appendChild(svgEl("line", {
+      x1: sx(C.x), y1: sy(C.y),
+      x2: sx(D.x), y2: sy(D.y),
+      ...style
+    }));
   }
 
-  const clipped = clipSegmentToBounds(A, B);
-  if (!clipped) return;
+  // 1) Old line (faded), if we have one saved from a learning step
+  if (model.prevLineActive && model.prevLine) {
+    drawLineForParams(model.prevLine, {
+      stroke: "#d97706",
+      "stroke-width": 2,
+      opacity: 0.25
+    });
+  }
 
-  const [C, D] = clipped;
-  els.viz.appendChild(svgEl("line", {
-    x1: sx(C.x), y1: sy(C.y),
-    x2: sx(D.x), y2: sy(D.y),
-    stroke: "#333",
-    "stroke-width": 2
-  }));
+  // 2) Current line (bold)
+  drawLineForParams({ w1: model.w1, w2: model.w2, c: model.c }, {
+    stroke: "#d97706",
+    "stroke-width": 3,
+    opacity: 1
+  });
 }
+
 
 function drawPoint(pt, isCurrent) {
   const positive = (pt.Sentiment === 1);
