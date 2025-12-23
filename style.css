@@ -36,3 +36,25 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   max-height: 520px;
   overflow-y: auto;
 }
+/* Learning math formatting */
+#deltaInfo {
+  white-space: normal;     /* allow paragraphs instead of single line */
+  line-height: 1.35;
+}
+
+.mathline {
+  margin: 4px 0;
+}
+
+.mathblock {
+  margin: 10px 0;
+  padding: 8px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.small {
+  font-size: 12px;
+  color: #444;
+}
