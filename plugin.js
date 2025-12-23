@@ -599,13 +599,14 @@ function fmtRule(w1, w2, c, bold=false) {
 }
 
 els.deltaInfo.innerHTML = `
-  <div class="mathline"><b>Old rule</b>: ${fmtRule(w1Old, w2Old, cOld, false)}</div>
-
+  <div class="mathline"><b>Old rule: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
+    <div class><br></br></div>
   <div class="mathblock">
     <div class="mathline"><b>w1 update</b></div>
-    <div class="mathline small">words: New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
-    <div class="mathline small">values: New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbest}</div>
-    <div class="mathline"><b>simplify:</b> New w1 = <b>${model.w1.toFixed(2)}</b></div>
+    <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × Cbest</div>
+    <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.Cbest}</div>
+    <div class="mathline small"><b> New w1 = ${model.w1.toFixed(2)}</b></div>
+    <div class><br></br></div>
   </div>
 
   <div class="mathblock">
