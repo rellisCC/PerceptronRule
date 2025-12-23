@@ -224,6 +224,9 @@ function predFromScore(s) {
 
 
   function perceptronUpdate(pt, lr) {
+     // Save the old line so we can fade it + draw arrows after learning
+      model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
+      model.prevLineActive = true;
     // Standard perceptron update on mistake:
     // w <- w + lr * y * x
     // c <- c + lr * y
