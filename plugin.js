@@ -160,18 +160,30 @@
 );
     const found = (casesRes.values && casesRes.values.cases) ? casesRes.values.cases : [];
 
-    // Normalize:
-    return found.map(c => {
-      const v = c.values || {};
-      return {
-        id: c.id,
-        feat1: Number(v.feat1 ?? v.x ?? 0),
-        feat2: Number(v.feat2 ?? v.y ?? 0),
-        Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
-        Text: v.Text ?? v.text ?? ""
-      };
-    });
-  }
+// Normalize:
+return found.map(c => {
+  const raw = c.values || {};
+
+  // If CODAP column names are like "feat1:Cbest", normalize to { feat1: ... }
+  const v = {};
+  Object.entries(raw).forEach(([k, val]) => {
+    const base = String(k).split(":")[0].trim(); // "feat1:Cbest" -> "feat1"
+    v[base] = val;
+  });
+
+  return {
+    id: c.id,
+    ID: v.ID ?? raw.ID ?? "",
+
+    // internal feature names (your code uses these)
+    feat1: Number(v.feat1 ?? v.Cbest ?? v.x ?? 0),
+    feat2: Number(v.feat2 ?? v.Cbad ?? v.y ?? 0),
+
+    Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
+    Text: v.Text ?? v.text ?? ""
+  };
+});
+
 
   async function createOrResetSampleDataset() {
     if (!SAMPLE_SPEC) {
