@@ -812,6 +812,16 @@ function drawPoint(pt, isCurrent) {
     fill: positive ? "orange" : "purple",
     opacity: isCurrent ? 1 : 0.65
   }));
+ 
+   // ID label
+  els.viz.appendChild(svgEl("text", {
+    x: sx(pt.Cbest) + (isCurrent ? 10 : 8),
+    y: sy(pt.Cbad) - (isCurrent ? 10 : 8),
+    "font-size": isCurrent ? 13 : 11,
+    "font-weight": isCurrent ? 700 : 400,
+    fill: "#111",
+    opacity: isCurrent ? 1 : 0.75
+  })).textContent = String(pt.id);
 }
 
 function renderViz() {
