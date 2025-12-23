@@ -213,11 +213,14 @@
   function scorePoint(pt) {
     return model.w1 * pt.Cbest + model.w2 * pt.Cbad + model.c;
   }
+const SCORE_EPS = 1e-9;
 
-  function predFromScore(s) {
-    // predicts +1 when s >= 0 else -1
-    return s >= 0 ? 1 : -1;
-  }
+function predFromScore(s) {
+  // predicts +1 when s >= 0 (line counts as positive)
+  // allow tiny floating-point negatives to still count as "on the line"
+  return s >= -SCORE_EPS ? 1 : -1;
+}
+
 
   function perceptronUpdate(pt, lr) {
     // Standard perceptron update on mistake:
