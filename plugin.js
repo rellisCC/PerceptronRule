@@ -527,7 +527,48 @@ function drawDecisionLine() {
       ...style
     }));
 
-    return clipped; // return segment in DATA space
+    return clipped; // [C,D] in DATA space
+  }
+
+  function fmt(v) {
+    // short, readable coefficients
+    return String(+v.toFixed(2)).replace(/\.?0+$/, "");
+  }
+
+  function labelForParams(params, opacity) {
+    const w1 = fmt(params.w1);
+    const w2 = fmt(params.w2);
+    const c  = fmt(params.c);
+    return `${w1}·Cbest + ${w2}·Cbad + ${c} ≥ 0`;
+  }
+
+  function placeLabel(seg, text, opts) {
+    // Place near the middle of the segment with a slight normal offset
+    const [P, Q] = seg;
+    const mx = (sx(P.x) + sx(Q.x)) / 2;
+    const my = (sy(P.y) + sy(Q.y)) / 2;
+
+    const vx = sx(Q.x) - sx(P.x);
+    const vy = sy(Q.y) - sy(P.y);
+    const len = Math.hypot(vx, vy) || 1;
+
+    // normal direction
+    const nx = -vy / len;
+    const ny =  vx / len;
+
+    const offset = 12;
+    const x = mx + nx * offset;
+    const y = my + ny * offset;
+
+    const t = svgEl("text", {
+      x, y,
+      "text-anchor": "middle",
+      "font-size": 12,
+      fill: opts.fill || "#111",
+      opacity: opts.opacity ?? 1
+    });
+    t.textContent = text;
+    els.viz.appendChild(t);
   }
 
   function drawArrowStraight(x1, y1, x2, y2) {
@@ -585,7 +626,7 @@ function drawDecisionLine() {
     }));
   }
 
-  // ---- draw old line + arrows if learning just happened ----
+  // ---- draw old line + label + arrows if learning just happened ----
   let oldSeg = null;
   if (model.prevLineActive && model.prevLine) {
     oldSeg = drawLineForParams(model.prevLine, {
@@ -593,15 +634,21 @@ function drawDecisionLine() {
       "stroke-width": 2,
       opacity: 0.25
     });
+    if (oldSeg) {
+      placeLabel(oldSeg, labelForParams(model.prevLine), { fill: "#111", opacity: 0.35 });
+    }
   }
 
-  // ---- draw new line (always) ----
+  // ---- draw new line + label (always) ----
   const newParams = { w1: model.w1, w2: model.w2, c: model.c };
   const newSeg = drawLineForParams(newParams, {
     stroke: "#d97706",
     "stroke-width": 3,
     opacity: 1
   });
+  if (newSeg) {
+    placeLabel(newSeg, labelForParams(newParams), { fill: "#111", opacity: 1 });
+  }
 
   // ---- arrows from old → new ----
   if (oldSeg && newSeg) {
