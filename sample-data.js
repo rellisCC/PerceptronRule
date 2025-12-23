@@ -4,8 +4,8 @@ window.SAMPLE_DATASETS = [
     attrs: [
       { name: "ID" },
       { name: "Text" },
-      { name: "Cbest" },
-      { name: "Cbad" },
+      { name: "feat1: Cbest" },
+      { name: "feat2: Cbad" },
       { name: "Sentiment" }
     ],
     cases: [
