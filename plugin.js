@@ -634,6 +634,7 @@ function renderViz() {
   }
 
   function advancePoint() {
+     model.prevLineActive = false;
      els.btnFail.disabled = false;
     curIndex += 1;
     if (curIndex >= cases.length) {
