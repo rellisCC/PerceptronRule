@@ -775,6 +775,7 @@ if (model.prevLineActive && model.prevLine) {
       { fill: "#111", opacity: 0.35, anchor: "rightExit" }
     );
   }
+   model.lineLabelBBox = newLabel ? newLabel.getBBox() : null;
 }
 
 // ---- draw new line + label (always) ----
@@ -871,14 +872,47 @@ function drawPoint(pt, isCurrent) {
   }));
  
    // ID label
-  els.viz.appendChild(svgEl("text", {
-    x: sx(pt.feat1) + (isCurrent ? 10 : 8),
-    y: sy(pt.feat2) - (isCurrent ? 10 : 8),
-    "font-size": isCurrent ? 13 : 11,
-    "font-weight": isCurrent ? 700 : 400,
-    fill: "#111",
-    opacity: isCurrent ? 1 : 0.75
-  })).textContent = String(pt.ID);
+   const baseX = sx(pt.feat1);
+   const baseY = sy(pt.feat2);
+   
+   const label = svgEl("text", {
+     x: baseX + (isCurrent ? 10 : 8),
+     y: baseY - (isCurrent ? 10 : 8),
+     "font-size": isCurrent ? 13 : 11,
+     "font-weight": isCurrent ? 700 : 400,
+     fill: "#111",
+     opacity: isCurrent ? 1 : 0.75
+   });
+   label.textContent = String(pt.ID);
+   els.viz.appendChild(label);
+   const avoid = model.lineLabelBBox;
+   if (avoid) {
+     const k = isCurrent ? 12 : 10;
+   
+     const candidates = [
+       { dx: +k,  dy: -k },  // NE (default)
+       { dx: +k,  dy: +k },  // SE
+       { dx: -k,  dy: -k },  // NW
+       { dx: -k,  dy: +k },  // SW
+       { dx: +2*k, dy: 0 },  // E
+       { dx: -2*k, dy: 0 }   // W
+     ];
+   
+     function overlaps(a, b) {
+       return a.x < b.x + b.width &&
+              a.x + a.width > b.x &&
+              a.y < b.y + b.height &&
+              a.y + a.height > b.y;
+     }
+   
+     for (const c of candidates) {
+       label.setAttribute("x", String(baseX + c.dx));
+       label.setAttribute("y", String(baseY + c.dy));
+       const bb = label.getBBox();
+       if (!overlaps(bb, avoid)) break;
+     }
+   }
+
 }
 
 function renderViz() {
