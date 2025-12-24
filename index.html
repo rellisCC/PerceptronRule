@@ -18,7 +18,7 @@
   </header>
 
   <section class="row">
-    <div class="card">
+    <div class="card grow">
       <div class="card-title">Data</div>
 
       <label class="field">
@@ -29,7 +29,7 @@
       <div class="hint">
         Choose <b>Sample Dataset</b> and click <b>Load/Reset Sample Dataset</b> to create starter data in CODAP.
         Or select an existing dataset that includes columns:
-        <code>feat1</code>, <code>feat2</code>, <code>Sentiment</code> (Neg=-1; Pos=+1).
+        <code>ID</code>,<code>feat1</code>, <code>feat2</code>, <code>Sentiment</code> (Neg=-1; Pos=+1).
       </div>
 
       <div class="btnrow">
@@ -39,11 +39,15 @@
 
       <div class="status" id="dataStatus">Not connected yet…</div>
     </div>
+  </section>
 
-    <div class="card">
-      <div class="card-title">Model</div>
+  <section class="row" style="flex-wrap:nowrap; align-items:flex-start;">
 
-      <label class="field">
+  <!-- LEFT: graph + point info + buttons -->
+  <div class="card" style="flex:1; min-width:560px;">
+    <div class="card-title">Graph of Rule and Point(s)</div>
+
+        <label class="field">
         <span>w1</span>
         <input id="w1" type="range" min="-1" max="1" step="0.05" value="0.4"/>
         <span class="mono" id="w1Val"></span>
@@ -61,21 +65,10 @@
         <span class="mono" id="cVal"></span>
       </label>
 
-      <div class="btnrow">
+          <div class="btnrow">
         <button id="resetModelBtn">Reset model</button>
-        <button id="evaluateBtn">Evaluate model</button>
       </div>
-
-      <div class="status mono" id="modelStatus"></div>
-    </div>
-  </section>
-
-  <section class="row" style="flex-wrap:nowrap; align-items:flex-start;">
-
-  <!-- LEFT: graph + point info + buttons -->
-  <div class="card" style="flex:1; min-width:560px;">
-    <div class="card-title">Graph of Rule and Point(s)</div>
-
+    
     <div class="viz-wrap">
       <svg id="viz" viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
@@ -115,10 +108,15 @@
       <button id="btnFail">Rule fails. Must improve!</button>
       <button id="btnNextAfterImprove" disabled>Rule improved. Check next point.</button>
     </div>
- 
+
     <div class="hint">
       Tip: When you feel like the model has learned enough, click <b>Evaluate model</b> to show all points and compute total error.
     </div>
+      
+      <div class="btnrow">
+        <button id="evaluateBtn">Evaluate model</button>
+      </div>
+      
 
        <label class="math-toggle">
         <input type="checkbox" id="toggleMath">
