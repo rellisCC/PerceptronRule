@@ -158,7 +158,7 @@ async function listCODAPDatasets() {
   return dcs
     .map(dc => ({
        name: (dc && (dc.name || dc.title)) || "",
-       title: (dc && (dc.title || dc.name) || ""
+       title: (dc && (dc.title || dc.name)) || ""
          }))
     .filter(dc => dc.name);
 }
