@@ -206,10 +206,22 @@ return found.map(c => {
       }]
     });
 
-    // Add cases
-    const values = SAMPLE_SPEC.cases.map(row => ({
-      values: row
-    }));
+// Add cases (ensure keys match CODAP attribute names exactly)
+const values = SAMPLE_SPEC.cases.map(row => {
+  const v = { ...row };
+
+  // If attrs include colon labels like "feat1: Cbest", copy from base key "feat1"
+  (SAMPLE_SPEC.attrs || []).forEach(a => {
+    const attrName = a.name;
+    const base = String(attrName).split(":")[0].trim(); // "feat1: Cbest" -> "feat1"
+    if (attrName.includes(":") && v[base] !== undefined) {
+      v[attrName] = v[base];
+    }
+  });
+
+  return { values: v };
+});
+
     await codapRequest(
       "create",
       `dataContext[${SAMPLE_SPEC.name}].collection[Cases].case`,
