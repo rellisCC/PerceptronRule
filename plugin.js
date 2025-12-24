@@ -416,6 +416,26 @@ function drawAxes() {
     ty.textContent = fmtTick(y);
     g.appendChild(ty);
   }
+  // X-axis label
+  g.appendChild(svgEl("text", {
+    x: PLOT.w / 2,
+    y: PLOT.h - 6,
+    "text-anchor": "middle",
+    "font-size": 13,
+    "font-weight": 600,
+    fill: "#333"
+  })).textContent = "feat1";
+
+  // Y-axis label
+  g.appendChild(svgEl("text", {
+    x: 14,
+    y: PLOT.h / 2,
+    transform: `rotate(-90 14 ${PLOT.h / 2})`,
+    "text-anchor": "middle",
+    "font-size": 13,
+    "font-weight": 600,
+    fill: "#333"
+  })).textContent = "feat2";
 
   els.viz.appendChild(g);
 }
