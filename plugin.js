@@ -1049,7 +1049,7 @@ function renderViz() {
   async function refreshDatasetList() {
     const datasetList = await listCODAPDatasets();
     setDatasetUIOptions(datasetList);
-    setStatus(`Connected ✓  •  Found ${names.length} CODAP dataset(s)`);
+    setStatus(`Connected ✓  •  Found ${datasetList.length} CODAP dataset(s)`);
   }
 
   async function chooseDataset(name) {
