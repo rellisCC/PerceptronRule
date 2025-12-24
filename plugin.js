@@ -156,17 +156,28 @@ async function listCODAPDatasets() {
 
   // Prefer title (what users see), fall back to name.
   return dcs
-    .map(dc => (dc && (dc.title || dc.name)) || "")
-    .filter(Boolean);
+    .map(dc => ({
+       name: dc && (dc.title || dc.name)) || "",
+       title: dc && (dc.title || dc.name) || ""
+         }))
+    .filter(dc => dc.name);
 }
 
 
-  async function loadDatasetCases(datasetName) {
-    // Get all cases from collection[0]
-    const collectionsRes = await codapRequest("get", `dataContext[${datasetName}].collectionList`);
-    const collections = collectionsRes.values && collectionsRes.values.collections;
-    if (!collections || !collections.length) throw new Error("No collections found in dataset.");
-    const collName = collections[0].name;
+   async function loadDatasetCases(datasetName) {
+     const collectionsRes = await codapRequest("get", `dataContext[${datasetName}].collectionList`);
+   
+     // collectionList can be: values: [{name...}, ...] OR values: { collections: [...] }
+     let collections = [];
+     if (Array.isArray(collectionsRes.values)) {
+       collections = collectionsRes.values;
+     } else if (collectionsRes.values && Array.isArray(collectionsRes.values.collections)) {
+       collections = collectionsRes.values.collections;
+     }
+   
+     if (!collections.length) throw new Error("No collections found in dataset.");
+   
+     const collName = collections[0].name;
 
     const casesRes = await codapRequest(
   "get",
@@ -206,7 +217,7 @@ return found.map(c => {
 
     // If exists, delete then recreate (simplest reset behavior)
     const existing = await listCODAPDatasets();
-    if (existing.includes(SAMPLE_SPEC.name)) {
+    if (existing.some(dc => dc.name === SAMPLE_SPEC.name)) {
       await codapRequest("delete", `dataContext[${SAMPLE_SPEC.name}]`);
     }
 
@@ -1021,23 +1032,23 @@ function renderViz() {
     els.datasetSelect.innerHTML = "";
     // Always include sample dataset option at top
     const sampleOpt = document.createElement("option");
-    sampleOpt.value = SAMPLE_NAME;
-    sampleOpt.textContent = SAMPLE_NAME;
+    sampleOpt.value = SAMPLE_NAME; // value used in API calls
+    sampleOpt.textContent = SAMPLE_NAME; //label shown to user
     els.datasetSelect.appendChild(sampleOpt);
 
     datasetNames
-      .filter(n => n !== SAMPLE_NAME)
-      .forEach(name => {
+      .filter(dc => dc.name !== SAMPLE_NAME)
+      .forEach(dc => {
         const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
+        opt.value = dc.name;                   //Internal name
+        opt.textContent = dc.title || dc.name; // shown label
         els.datasetSelect.appendChild(opt);
       });
   }
 
   async function refreshDatasetList() {
-    const names = await listCODAPDatasets();
-    setDatasetUIOptions(names);
+    const datasetList = await listCODAPDatasets();
+    setDatasetUIOptions(datasetList);
     setStatus(`Connected ✓  •  Found ${names.length} CODAP dataset(s)`);
   }
 
@@ -1047,8 +1058,8 @@ function renderViz() {
     if (name === SAMPLE_NAME) {
       // Don’t auto-create until they click Load/Reset;
       // but if it already exists, we can use it.
-      const names = await listCODAPDatasets();
-      if (names.includes(SAMPLE_NAME)) {
+      const dcs = await listCODAPDatasets();
+      if (dcs.some(dc => dc.name === SAMPLE_NAME)) {
         cases = await loadDatasetCases(SAMPLE_NAME);
       } else {
         cases = [];
