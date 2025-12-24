@@ -157,8 +157,8 @@ async function listCODAPDatasets() {
   // Prefer title (what users see), fall back to name.
   return dcs
     .map(dc => ({
-       name: dc && (dc.title || dc.name)) || "",
-       title: dc && (dc.title || dc.name) || ""
+       name: (dc && (dc.name || dc.title)) || "",
+       title: (dc && (dc.title || dc.name) || ""
          }))
     .filter(dc => dc.name);
 }
