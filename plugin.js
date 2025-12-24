@@ -546,6 +546,7 @@ function clipSegmentToBounds(A, B) {
 }
 
 function drawDecisionLine() {
+    model.lineLabelBBox = null;
   function drawLineForParams(params, style) {
     const w1 = params.w1, w2 = params.w2, c = params.c;
 
@@ -775,7 +776,7 @@ if (model.prevLineActive && model.prevLine) {
       { fill: "#111", opacity: 0.35, anchor: "rightExit" }
     );
   }
-   model.lineLabelBBox = newLabel ? newLabel.getBBox() : null;
+
 }
 
 // ---- draw new line + label (always) ----
@@ -794,7 +795,8 @@ if (newSeg) {
     { fill: "#111", opacity: 1, bold: true, anchor: "yIntercept" }
   );
 }
-
+  model.lineLabelBBox = newLabel ? newLabel.getBBox() : null;
+   
 // ---- resolve label overlap ----
 if (oldLabel && newLabel) {
   for (let i = 0; i < 6; i++) {
