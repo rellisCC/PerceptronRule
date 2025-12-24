@@ -4,9 +4,20 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-
 header { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e6e7ef; }
 .title { font-weight: 700; font-size: 18px; }
 .subtitle { color: #555; font-size: 13px; margin-top: 2px; }
-
+.mono {
+  font-family: "SF Mono", "Segoe UI Mono", "Roboto Mono", ui-monospace, monospace;
+  font-size: 13px;
+}
+.small {  font-size: 12px;  color: #444;}
 /* ============= Layout ================ */ 
 .row { display: flex; gap: 12px; padding: 12px 16px; flex-wrap: wrap; }
+.panel-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+  row-gap: 6px;
+  align-items: center;
+}
 
 /* ============= Components ================ */ 
 .card { background: #fff; border: 1px solid #e6e7ef; border-radius: 12px; padding: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); width: 360px; }
@@ -32,29 +43,6 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   user-select: none;
 }
 .chk input { margin: 0; }
-/* ============= Visualizations ================ */ 
-
-#viz { width: 100%; height: 380px; display: block; }
-
-/* ============= Dialogs ================ */ 
-#deltaInfo { grid-column: 1 / -1; }
-dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
-.dlg-title { font-weight: 700; margin-bottom: 8px; }
-.dlg-body { color: #222; font-size: 13px; }
-.dlg-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
-#mathCard {  max-height: 520px;  overflow-y: auto;}
-/* ============= Misc ================ */ 
-.mono {
-  font-family: "SF Mono", "Segoe UI Mono", "Roboto Mono", ui-monospace, monospace;
-  font-size: 13px;
-}
-.small {  font-size: 12px;  color: #444;}
-
-
-.card.grow { width: 100%; }
-
-
-
 .math-and-lr {
   display: flex;
   align-items: center;
@@ -63,11 +51,7 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   margin-top: 6px;
 }
 
-.math-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.math-toggle {  display: flex;  align-items: center;  gap: 6px;}
 
 .lr-inline {
   display: flex;
@@ -76,9 +60,7 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   font-size: 12px;
 }
 
-.lr-inline input[type="range"] {
-  width: 110px;
-}
+.lr-inline input[type="range"] {  width: 110px;}
 .inline-divider {
   color: #aaa;
   font-weight: 600;
@@ -86,32 +68,29 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   padding: 0 4px;
   user-select: none;
 }
-
 .status { margin-top: 8px; font-size: 12px; color: #444; }
 .hint { margin-top: 10px; font-size: 12px; color: #555; }
-
 .viz-wrap { background: #fff; border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
-
 .panel { margin-top: 10px; background: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 10px; }
-.panel-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 16px;
-  row-gap: 6px;
-  align-items: center;
-}
+.card.grow { width: 100%; }
 
+/* ============= Visualizations ================ */ 
+
+#viz { width: 100%; height: 380px; display: block; }
+
+/* ============= Dialogs ================ */ 
+dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
+.dlg-title { font-weight: 700; margin-bottom: 8px; }
+.dlg-body { color: #222; font-size: 13px; }
+.dlg-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
 
 /* ============ Learning math formatting ============ */
 #deltaInfo {
+  grid-column: 1 / -1;
   white-space: normal;     /* allow paragraphs instead of single line */
   line-height: 1.35;
 }
-
-.mathline {
-  margin: 4px 0;
-}
-
+.mathline {  margin: 4px 0;}
 .mathblock {
   margin: 10px 0;
   padding: 8px;
@@ -119,12 +98,9 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   border-radius: 10px;
   background: #fff;
 }
-
-
 #mathCard {
+  max-height: 520px;
+  overflow-y: auto;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-
-#mathCard .mono {
-  font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
-}
+#mathCard .mono {  font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;}
