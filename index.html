@@ -95,16 +95,13 @@
       Tip: The shaded <b>orange</b> side is where the rule predicts <b>positive</b> (+1). Negative points are purple.
     </div>
   </div> <!-- end graph card -->
+
+<!-- Right side math learning card -->
     
     <div class="card" style="flex:1; min-width:560px;">
       <div class="card-title">Weight learning</div>
       
     <div class="math-and-lr">
-      <label class="math-toggle">
-        <input type="checkbox" id="toggleMath">
-        <span>Show math for adjusting weights</span>
-      </label>
-
       <span class="inline-divider">||</span>
       
       <label class="lr-inline">
@@ -126,14 +123,17 @@
     <div class="hint">
       Tip: When you feel like the model has learned enough, click <b>Evaluate model</b> to show all points and compute total error.
     </div>
-  </div>
 
-  <!-- RIGHT: learning math card -->
-  <div class="card" id="mathCard" style="display:none; width:560px; max-height:640px; overflow:auto;">
-    <div class="card-title">Math to Update Weights</div>
-    <div class="mono" id="deltaInfo"></div>
+       <label class="math-toggle">
+        <input type="checkbox" id="toggleMath">
+        <span>Show math for adjusting weights</span>
+      </label>
+    
+    <!-- Below, open up the math for learning weights-->
+ <div id="mathCard" class="panel" style="display:none; max-height:640px; overflow:auto;">
+  <div class="mono" id="deltaInfo"></div>
+</div>
   </div>
-
 </section>
 
 
