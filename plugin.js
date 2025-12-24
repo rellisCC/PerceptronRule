@@ -29,6 +29,7 @@
 
     resetModelBtn: $("#resetModelBtn"),
     evaluateBtn: $("#evaluateBtn"),
+    showAllCases: $("#showAllCases"),
     modelStatus: $("#modelStatus"),
 
     viz: $("#viz"),
@@ -1226,7 +1227,7 @@ els.deltaInfo.innerHTML = `
     els.alertOk.addEventListener("click", () => els.alertDlg.close());
     els.evalClose.addEventListener("click", () => {
       els.evalDlg.close();
-      showingAll = false;
+      showingAll = els.showAllCases.checked;
       renderViz();
     });
 
@@ -1240,6 +1241,10 @@ els.deltaInfo.innerHTML = `
 
     // Buttons
     els.resetModelBtn.addEventListener("click", resetModel);
+     els.showAllCases.addEventListener("change", () => {
+        showingAll = els.showAllCases.checked;
+        renderViz();
+      });
     els.evaluateBtn.addEventListener("click", showEvaluationDialog);
     els.btnCorrect.addEventListener("click", studentSaysCorrect);
     els.btnFail.addEventListener("click", studentSaysFail);
