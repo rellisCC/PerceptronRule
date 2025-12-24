@@ -140,12 +140,26 @@
   // ----------------------------
   // CODAP dataset utilities
   // ----------------------------
-  async function listCODAPDatasets() {
-    const res = await codapRequest("get", "dataContextList");
-    // returns { values: { dataContexts: [{name, title, id}, ...] } }
-    const dcs = (res.values && res.values.dataContexts) ? res.values.dataContexts : [];
-    return dcs.map(dc => dc.name || dc.title).filter(Boolean);
+async function listCODAPDatasets() {
+  const res = await codapRequest("get", "dataContextList");
+
+  // CODAP API has (at least) two shapes in the wild:
+  // 1) values: [ {id, name, title}, ... ]   (documented)
+  // 2) values: { dataContexts: [ {name,title,id}, ... ] }  (older/alternate)
+  let dcs = [];
+
+  if (Array.isArray(res.values)) {
+    dcs = res.values;
+  } else if (res.values && Array.isArray(res.values.dataContexts)) {
+    dcs = res.values.dataContexts;
   }
+
+  // Prefer title (what users see), fall back to name.
+  return dcs
+    .map(dc => (dc && (dc.title || dc.name)) || "")
+    .filter(Boolean);
+}
+
 
   async function loadDatasetCases(datasetName) {
     // Get all cases from collection[0]
