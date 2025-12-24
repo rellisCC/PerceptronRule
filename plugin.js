@@ -926,7 +926,7 @@ function renderViz() {
     const yhat = predFromScore(s);
     const mistake = (yhat !== pt.Sentiment);
 
-    els.ptInfo.textContent = `(${pt.feat1}, ${pt.feat2})`;
+    els.ptInfo.textContent = `${pt.ID || ""}(${pt.feat1}, ${pt.feat2})`;
     els.epochInfo.textContent = String(epoch);
     els.indexInfo.textContent = String(curIndex + 1) + " / " + String(cases.length);
 
