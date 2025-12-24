@@ -371,7 +371,7 @@ function drawAxes() {
     g.appendChild(svgEl("line", {
       x1: sx(AX.xmin), y1: sy(y),
       x2: sx(AX.xmax), y2: sy(y),
-      stroke: "#eee",
+      stroke: "#d6d6d6",
       "stroke-width": 1
     }));
   }
