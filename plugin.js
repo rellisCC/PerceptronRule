@@ -110,7 +110,7 @@
   // ----------------------------
   // Data model
   // ----------------------------
-  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 2.0 };
+  const DEFAULT_MODEL = { w1: 0.2, w2: -0.2, c: 0.5 };
   let model = { ...DEFAULT_MODEL };
 
   // Training state
@@ -286,8 +286,8 @@ const FIXED_MIN = -2;
 // Update AX bounds (call before rendering)
 function updateAxesBounds() {
   // Default max if no data yet
-  let xMax = 2;
-  let yMax = 2;
+  let xMax = 3.5;
+  let yMax = 3.5;
 
   // Consider all points we might show
   const pts = cases && cases.length ? cases : [];
