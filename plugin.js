@@ -685,6 +685,19 @@ function drawDecisionLine() {
   });
   t.textContent = text;
   els.viz.appendChild(t);
+  // Keep the *entire* label bbox within the plot area (not just the anchor point)
+  const b = t.getBBox();
+
+  let dx = 0, dy = 0;
+
+  if (b.x < minX) dx = (minX - b.x);
+  if (b.x + b.width > maxX) dx = (maxX - (b.x + b.width));
+
+  if (b.y < minY) dy = (minY - b.y);
+  if (b.y + b.height > maxY) dy = (maxY - (b.y + b.height));
+
+  if (dx !== 0) t.setAttribute("x", String(x + dx));
+  if (dy !== 0) t.setAttribute("y", String(y + dy));
 
   return t
 }
