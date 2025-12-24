@@ -678,7 +678,7 @@ function drawDecisionLine() {
   const t = svgEl("text", {
     x, y,
     "text-anchor": "start",
-    "font-size": 12,
+    "font-size": 15,
     "font-weight": opts.bold ? 700 : 400,
     fill: opts.fill || "#111",
     opacity: opts.opacity ?? 1
