@@ -833,7 +833,7 @@ function drawPoint(pt, isCurrent) {
     "font-weight": isCurrent ? 700 : 400,
     fill: "#111",
     opacity: isCurrent ? 1 : 0.75
-  })).textContent = String(pt.id);
+  })).textContent = String(pt.ID);
 }
 
 function renderViz() {
