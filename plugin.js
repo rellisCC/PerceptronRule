@@ -1215,7 +1215,7 @@ els.deltaInfo.innerHTML = `
     els.evalSummary.textContent =
       `Cases: ${r.n}   •   Accuracy: ${(100 * r.acc).toFixed(1)}%   •   MSE: ${r.mse.toFixed(3)}`;
 
-    if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.showModal();
+    if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.show();
   }
 
   // ----------------------------
