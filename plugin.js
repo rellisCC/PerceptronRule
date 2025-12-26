@@ -191,8 +191,8 @@
     connected = true;
      // Restore any previously-saved interactive state (e.g., when opening a shared copy)
       try {
-        const r = await codapRequest("get", "interactiveState");
-        importInteractiveState(r?.values);
+        const frame = await codapRequest("get", "interactiveFrame");
+        importInteractiveState(frame?.values?.savedState);
       
         // Reflect restored state in the UI
         syncSlidersToModel();
