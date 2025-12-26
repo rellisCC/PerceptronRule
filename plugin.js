@@ -89,6 +89,32 @@
       });
     });
   }
+   function exportInteractiveState() {
+     return {
+       // model parameters
+       w1: model.w1,
+       w2: model.w2,
+       c: model.c,
+   
+       // UI / training state you likely want to persist
+       lr: Number(els.lr?.value ?? 0.1),
+       currentDatasetName,
+       curIndex,
+       epoch,
+       showAllCases: !!els.showAllCases?.checked
+     };
+   }
+   
+   function phoneHandler(request, callback) {
+     // CODAP will call this when saving the document.
+     if (request && request.action === "get" && request.resource === "interactiveState") {
+       callback({ success: true, values: exportInteractiveState() });
+       return;
+     }
+   
+     // Default: say “ok” to anything else (we’re not using inbound calls yet).
+     callback({ success: true });
+   }
 
   async function connectToCODAP() {
     // Must be embedded in CODAP (iFrame). iframe-phone provides the RPC transport.
@@ -98,7 +124,7 @@
 
     // Create an RPC endpoint to CODAP (the parent frame).
     // The handler is required by iframe-phone but we don't need to handle incoming calls here.
-    phone = new window.iframePhone.IframePhoneRpcEndpoint(function () {}, "data-interactive", window.parent);
+    phone = new window.iframePhone.IframePhoneRpcEndpoint(phoneHandler, "data-interactive", window.parent);
 
     // Verify CODAP is listening:
     await codapRequest("get", "interactiveFrame");
