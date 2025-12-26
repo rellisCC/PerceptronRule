@@ -1380,9 +1380,6 @@ if (toggle && mathCard) {
     try {
       setStatus("Connecting to CODAP…");
       await connectToCODAP();
-          // Restore saved interactive state (if this CODAP doc has one)
-          const stRes = await codapRequest("get", "interactiveState");
-          importInteractiveState(stRes && stRes.values);
       await refreshDatasetList();
       // Default select “Sample Dataset”
       els.datasetSelect.value = SAMPLE_NAME;
