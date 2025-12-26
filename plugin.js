@@ -141,7 +141,8 @@
        // CODAP will call this when opening a saved/shared document to restore state.
         if (request && request.action === "set" && request.resource === "interactiveState") {
           // CODAP typically sends the saved object as request.values
-          importInteractiveState(request.values);
+          const state = request.values?.interactiveState ?? request.values;
+            importInteractiveState(state);
       
           // Make sure restored state is reflected in the UI immediately
           syncSlidersToModel();
