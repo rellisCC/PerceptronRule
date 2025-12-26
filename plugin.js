@@ -137,7 +137,22 @@
        callback({ success: true, values: exportInteractiveState() });
        return;
      }
-   
+
+       // CODAP will call this when opening a saved/shared document to restore state.
+        if (request && request.action === "set" && request.resource === "interactiveState") {
+          // CODAP typically sends the saved object as request.values
+          importInteractiveState(request.values);
+      
+          // Make sure restored state is reflected in the UI immediately
+          syncSlidersToModel();
+          updateSliderLabels();
+          renderViz();
+          updateCurrentPointPanel();
+      
+          callback({ success: true });
+          return;
+        }
+
      // Default: say “ok” to anything else (we’re not using inbound calls yet).
      callback({ success: true });
    }
