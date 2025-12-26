@@ -152,8 +152,25 @@
     // The handler is required by iframe-phone but we don't need to handle incoming calls here.
     phone = new window.iframePhone.IframePhoneRpcEndpoint(phoneHandler, "data-interactive", window.parent);
 
-    // Verify CODAP is listening:
-    await codapRequest("get", "interactiveFrame");
+      // Verify CODAP is listening (shared views can be slower to respond)
+      let ok = false;
+      let lastErr = null;
+      
+      for (let i = 0; i < 8; i++) {
+        try {
+          await codapRequest("get", "interactiveFrame");
+          ok = true;
+          break;
+        } catch (e) {
+          lastErr = e;
+          // small pause before retry
+          await new Promise(r => setTimeout(r, 250));
+        }
+      }
+      
+      if (!ok) {
+        throw lastErr || new Error("No response from CODAP.");
+      }
 
     connected = true;
     setStatus("Connected to CODAP ✓");
