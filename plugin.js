@@ -104,7 +104,33 @@
        showAllCases: !!els.showAllCases?.checked
      };
    }
+ 
+   function importInteractiveState(s) {
+     if (!s) return;
    
+     // restore parameters if present
+     if (typeof s.w1 === "number") model.w1 = s.w1;
+     if (typeof s.w2 === "number") model.w2 = s.w2;
+     if (typeof s.c === "number") model.c = s.c;
+   
+     // restore UI controls if present
+     if (typeof s.lr === "number" && els.lr) els.lr.value = String(s.lr);
+     if (typeof s.showAllCases === "boolean" && els.showAllCases) {
+       els.showAllCases.checked = s.showAllCases;
+       showingAll = s.showAllCases;
+     }
+   
+     // restore dataset selection if present
+     if (typeof s.currentDatasetName === "string" && s.currentDatasetName) {
+       currentDatasetName = s.currentDatasetName;
+       if (els.datasetSelect) els.datasetSelect.value = currentDatasetName;
+     }
+   
+     // restore progress counters if present
+     if (typeof s.curIndex === "number") curIndex = s.curIndex;
+     if (typeof s.epoch === "number") epoch = s.epoch;
+   }
+
    function phoneHandler(request, callback) {
      // CODAP will call this when saving the document.
      if (request && request.action === "get" && request.resource === "interactiveState") {
@@ -1337,6 +1363,9 @@ if (toggle && mathCard) {
     try {
       setStatus("Connecting to CODAP…");
       await connectToCODAP();
+          // Restore saved interactive state (if this CODAP doc has one)
+          const stRes = await codapRequest("get", "interactiveState");
+          importInteractiveState(stRes && stRes.values);
       await refreshDatasetList();
       // Default select “Sample Dataset”
       els.datasetSelect.value = SAMPLE_NAME;
