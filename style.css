@@ -92,6 +92,17 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
 .dlg-title { font-weight: 700; margin-bottom: 8px; }
 .dlg-body { color: #222; font-size: 13px; }
 .dlg-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+#evalDlg {
+  background: #e8f3ff;          /* pale blue */
+  border: 1px solid #b7d6ff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  font-size: 15px;             /* larger overall font */
+}
+#evalDlg .dlg-title {  font-size: 16px;}
+#evalDlg .dlg-body {  font-size: 15px;  line-height: 1.45;}
+#evalDlg #evalSummary > div {  margin: 6px 0; }              /* spacing between the three lines */
 
 /* ============ Learning math formatting ============ */
 #deltaInfo {
