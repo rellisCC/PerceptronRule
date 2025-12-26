@@ -1212,8 +1212,11 @@ els.deltaInfo.innerHTML = `
     const r = evaluateAll();
     lastEval = r;
 
-    els.evalSummary.textContent =
-      `Cases: ${r.n}   •   Accuracy: ${(100 * r.acc).toFixed(1)}%   •   MSE: ${r.mse.toFixed(3)}`;
+    els.evalSummary.innerHTML =`
+      <div><b>Cases:</b> ${r.n}</div>
+      <div><b>Accuracy:</b> ${(100 * r.acc).toFixed(1)}%</div>
+      <div><b>Mean Squared Error:</b> ${r.mse.toFixed(3)}
+    `;
 
     if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.show();
   }
