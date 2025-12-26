@@ -189,6 +189,19 @@
       }
 
     connected = true;
+     // Restore any previously-saved interactive state (e.g., when opening a shared copy)
+      try {
+        const r = await codapRequest("get", "interactiveState");
+        importInteractiveState(r?.values);
+      
+        // Reflect restored state in the UI
+        syncSlidersToModel();
+        updateSliderLabels();
+        renderViz();
+        updateCurrentPointPanel();
+      } catch (e) {
+        // If CODAP has no saved state yet, that's fine — start fresh.
+      }
     setStatus("Connected to CODAP ✓");
   }
 
