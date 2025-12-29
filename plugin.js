@@ -296,7 +296,7 @@ async function listCODAPDatasets() {
 
 // Normalize:
 return found.map(c => {
-  const raw = c.values || {};
+  const raw = c.values || c.case?.values || c.caseValue?.values || {};
 
   // If CODAP column names are like "feat1:Cbest", normalize to { feat1: ... }
   const v = {};
