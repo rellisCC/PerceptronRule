@@ -40,6 +40,49 @@ select { width: 100%; padding: 6px 8px; border-radius: 8px; border: 1px solid #d
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 button { padding: 8px 10px; border-radius: 10px; border: 1px solid #ddd; background: #fafafa; cursor: pointer; font-size: 13px; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnrow.btncol {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.learn-btn {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Keep disabled behavior exactly as before, just ensure it still looks faded */
+.learn-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Pale green */
+.learn-good {
+  background: #eaf7ee;
+  border-color: #bfe6c9;
+}
+
+/* Pale red */
+.learn-bad {
+  background: #fdecec;
+  border-color: #f2b8b8;
+}
+
+/* Pale yellow */
+.learn-improve {
+  background: #fff7db;
+  border-color: #f0df9a;
+}
+
+/* Small hover affordance (only when clickable) */
+.learn-btn:not(:disabled):hover {
+  filter: brightness(0.98);
+}
 .chk {
   display: inline-flex;
   align-items: center;
