@@ -305,13 +305,32 @@ return found.map(c => {
     v[base] = val;
   });
 
+  const num = (k) => {
+    const n = Number(v[k]);
+    return Number.isFinite(n) ? n : undefined;
+  };
+
+  let f1 = num("feat1") ?? num("Cbest") ?? num("x");
+  let f2 = num("feat2") ?? num("Cbad") ?? num("y");
+
+  // If our expected names aren't present, auto-pick numeric attributes
+  if (f1 === undefined || f2 === undefined) {
+    const numericKeys = Object.keys(v).filter(k => {
+      if (["Sentiment", "sentiment", "label", "Text", "text", "ID", "id"].includes(k)) return false;
+      return Number.isFinite(Number(v[k]));
+    });
+    if (f1 === undefined) f1 = numericKeys.length ? Number(v[numericKeys[0]]) : 0;
+    if (f2 === undefined) f2 = numericKeys.length > 1 ? Number(v[numericKeys[1]]) : 0;
+  }
+
+   
   return {
     id: c.id,
-    ID: v.ID ?? raw.ID ?? "",
+    ID: v.ID ?? v.id ?? raw.ID ?? raw.id ?? String(c.id ?? ""),
 
     // internal feature names (your code uses these)
-    feat1: Number(v.feat1 ?? v.Cbest ?? v.x ?? 0),
-    feat2: Number(v.feat2 ?? v.Cbad ?? v.y ?? 0),
+    feat1: f1,
+    feat2: f2,
 
     Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
     Text: v.Text ?? v.text ?? ""
