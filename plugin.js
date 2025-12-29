@@ -187,7 +187,13 @@
       if (!ok) {
         throw lastErr || new Error("No response from CODAP.");
       }
-
+   // Identify this interactive so CODAP can persist interactiveState with the document
+      await codapRequest("update", "interactiveFrame", {
+        name: "perceptron-trainer",
+        title: "Perceptron Trainer",
+        version: "1.0.0"
+      });
+     
     connected = true;
      // Restore any previously-saved interactive state (e.g., when opening a shared copy)
       try {
