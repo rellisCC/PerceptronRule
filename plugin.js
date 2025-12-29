@@ -302,7 +302,7 @@ return found.map(c => {
   const v = {};
   Object.entries(raw).forEach(([k, val]) => {
     const parts = String(k).split(":").map(s => s.trim());
-    const base = parts.length === 2 ? parts[1] : parts[0];
+    const base = parts[0]; 
     v[base] = val;
   });
 
