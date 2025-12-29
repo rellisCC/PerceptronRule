@@ -1327,9 +1327,20 @@ els.deltaInfo.innerHTML = `
   }
 
   function resetModel() {
+    // Reset model parameters
     model = { ...DEFAULT_MODEL };
     syncSlidersToModel();
+    // reset trainning progress
+     curIndex = 0;
+     epoch = 0;
+     awaitingImprove = false;
+    // Reset view and buttons
+     showingAll = !!els.showAllCases?.checked;   // respect checkbox state
+     els.btnNextAfterImprove.disabled = true;    // can't proceed-from-improve anymore
+     els.btnFail.disabled = false;               // allow "Rule fails" again
+     els.deltaInfo.textContent = "";             // clear any previous math explanation 
     setModelStatus("Model reset to defaults.");
+    // Refresh visuals
     renderViz();
     updateCurrentPointPanel();
   }
