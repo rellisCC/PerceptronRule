@@ -1185,8 +1185,8 @@ function renderViz() {
         ...pt,
         Sentiment: (pt.Sentiment >= 0 ? 1 : -1)
       }));
-      curIndex = 0;
-      epoch = 0;
+      curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
+      epoch = Math.max(0, epoch);
       awaitingImprove = false;
       showingAll = !!els.showAllCases?.checked;
       setModelStatus(`Loaded ${cases.length} cases from "${name}".`);
