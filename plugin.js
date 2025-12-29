@@ -301,7 +301,8 @@ return found.map(c => {
   // If CODAP column names are like "feat1:Cbest", normalize to { feat1: ... }
   const v = {};
   Object.entries(raw).forEach(([k, val]) => {
-    const base = String(k).split(":")[0].trim(); // "feat1:Cbest" -> "feat1"
+    const parts = String(k).split(":").map(s => s.trim());
+    const base = parts.length === 2 ? parts[1] : parts[0];
     v[base] = val;
   });
 
