@@ -1343,7 +1343,7 @@ els.deltaInfo.innerHTML = `
     els.evalSummary.innerHTML =`
       <div><b>Cases:</b> ${r.n}</div>
       <div><b>Accuracy:</b> ${(100 * r.acc).toFixed(1)}%</div>
-      <div><b>Mean Squared Error:</b> ${r.mse.toFixed(3)}
+      <div><b>Mean Squared Error:</b> ${r.mse.toFixed(3)}</div>
     `;
 
     if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.show();
