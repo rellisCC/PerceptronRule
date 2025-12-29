@@ -101,7 +101,9 @@
        currentDatasetName,
        curIndex,
        epoch,
-       showAllCases: !!els.showAllCases?.checked
+       showAllCases: !!els.showAllCases?.checked,
+       prevLineActive: !!model.prevLineActive,
+       prevLine: model.prevLine || null 
      };
    }
  
@@ -129,6 +131,8 @@
      // restore progress counters if present
      if (typeof s.curIndex === "number") curIndex = s.curIndex;
      if (typeof s.epoch === "number") epoch = s.epoch;
+     if (typeof s.prevLineActive === "boolean") model.prevLineActive = s.prevLineActive;
+     if (s.prevLine && typeof s.prevLine === "object") model.prevLine = s.prevLine;
    }
 
    function phoneHandler(request, callback) {
@@ -1184,7 +1188,7 @@ function renderViz() {
       curIndex = 0;
       epoch = 0;
       awaitingImprove = false;
-      showingAll = false;
+      showingAll = !!els.showAllCases?.checked;
       setModelStatus(`Loaded ${cases.length} cases from "${name}".`);
       renderViz();
       updateCurrentPointPanel();
