@@ -1421,8 +1421,8 @@ if (toggle && mathCard) {
       await connectToCODAP();
       await refreshDatasetList();
       // Default select “Sample Dataset”
-      els.datasetSelect.value = SAMPLE_NAME;
-      await chooseDataset(SAMPLE_NAME);
+      els.datasetSelect.value = currentDatasetName || SAMPLE_NAME;
+      await chooseDataset(els.datasetSelect.value);
 
       // Initial draw even if no cases yet
       syncSlidersToModel();
