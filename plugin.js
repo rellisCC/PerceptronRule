@@ -1119,12 +1119,23 @@ function renderViz() {
 
   function updateCurrentPointPanel() {
     const pt = cases[curIndex];
-    if (!pt) {
+    // If no current point
+     if (!pt) {
       els.ptInfo.textContent = "—";
       els.indexInfo.textContent = "—";
+      els.epochInfo.textContent = "—";
+      els.predInfo.textContent = "—";
+      els.sentInfo.textContent = "—";
+      els.deltaInfo.textContent = "";
+
+    // Reset learning workflow buttons to a safe state
+    awaitingImprove = false;
+    els.btnNextAfterImprove.disabled = true;
+    els.btnFail.disabled = false;
       return;
     }
 
+   // Normal case display
     const s = scorePoint(pt);
     const yhat = predFromScore(s);
     const mistake = (yhat !== pt.Sentiment);
