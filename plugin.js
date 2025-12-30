@@ -1239,6 +1239,9 @@ function renderViz() {
     currentDatasetName = name;
 
     if (name === SAMPLE_NAME) {
+     // Never show the Table dropdown for the sample dataset
+        if (els.collectionField) els.collectionField.style.display = "none";
+        if (els.collectionSelect) els.collectionSelect.innerHTML = "";
       // Don’t auto-create until they click Load/Reset;
       // but if it already exists, we can use it.
       const dcs = await listCODAPDatasets();
