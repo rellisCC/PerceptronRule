@@ -1359,7 +1359,6 @@ function renderViz() {
 
     cases = await loadDatasetCases(name, matching[0]);
   }
-}
 
 
     if (!cases.length) {
