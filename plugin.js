@@ -1281,14 +1281,13 @@ function renderViz() {
         });
       
         // Prefer Sample Dataset only if it exists
-        const sampleExists = dcs.some(dc => dc.name === SAMPLE_NAME);
-        if (sampleExists) {
-          els.datasetSelect.value = SAMPLE_NAME;
-          currentDatasetName = SAMPLE_NAME;
-        } else {
-          currentDatasetName = els.datasetSelect.value;
-        }
-      }
+         if (sampleExists) {
+           els.datasetSelect.value = SAMPLE_NAME;
+           currentDatasetName = SAMPLE_NAME;
+         } else {
+           currentDatasetName = els.datasetSelect.value;
+         }
+
 
 
   async function chooseDataset(name) {
