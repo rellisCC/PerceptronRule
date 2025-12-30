@@ -355,7 +355,7 @@ return found.map(c => {
       name: SAMPLE_SPEC.name,
       title: SAMPLE_SPEC.name,
       collections: [{
-        name: "Cases",
+        name: "Sample Dataset Cases",
         attrs: SAMPLE_SPEC.attrs.map(a => ({ name: a.name }))
       }]
     });
@@ -383,7 +383,7 @@ const values = SAMPLE_SPEC.cases.map(row => {
 
     await codapRequest(
       "create",
-      `dataContext[${SAMPLE_SPEC.name}].collection[Cases].case`,
+      `dataContext[${SAMPLE_SPEC.name}].collection[Sample Dataset Cases].case`,
       values
     );
 
