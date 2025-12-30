@@ -21,6 +21,12 @@
     <div class="card grow">
       <div class="card-title">Data</div>
 
+      <div class="btnrow">
+        <button id="loadSampleBtn">Load Sample Dataset</button>
+        <button id="refreshBtn">Find All Datasets</button>
+        <button id="resetSampleBtn">Reset Sample Dataset</button>
+      </div>
+      
       <label class="field">
         <span>Dataset</span>
         <select id="datasetSelect"></select>
@@ -37,10 +43,7 @@
         <code>ID</code>,<code>feat1</code>, <code>feat2</code>, <code>label</code> (Neg=-1; Pos=+1).
       </div>
 
-      <div class="btnrow">
-        <button id="refreshBtn">Refresh list</button>
-        <button id="loadSampleBtn">Load/Reset Sample Dataset</button>
-      </div>
+
 
       <div class="status" id="dataStatus">Not connected yet…</div>
     </div>
