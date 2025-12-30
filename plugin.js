@@ -102,6 +102,7 @@
        // UI / training state you likely want to persist
        lr: Number(els.lr?.value ?? 0.1),
        currentDatasetName,
+       currentCollectionName,
        curIndex,
        epoch,
        showAllCases: !!els.showAllCases?.checked,
@@ -130,7 +131,12 @@
        currentDatasetName = s.currentDatasetName;
        if (els.datasetSelect) els.datasetSelect.value = currentDatasetName;
      }
-   
+
+      if (typeof s.currentCollectionName === "string") {
+        currentCollectionName = s.currentCollectionName;
+     if (els.collectionSelect) els.collectionSelect.value = currentCollectionName;
+      }
+      
      // restore progress counters if present
      if (typeof s.curIndex === "number") curIndex = s.curIndex;
      if (typeof s.epoch === "number") epoch = s.epoch;
@@ -227,6 +233,7 @@
 
   // Training state
   let currentDatasetName = null;
+  let currentCollectionName = null;
   let cases = []; // [{id, feat1, feat2, label}]
   let curIndex = 0;
   let epoch = 0;
@@ -1543,7 +1550,10 @@ els.deltaInfo.innerHTML = `
         if (!currentDatasetName) return;
         try {
           cases = await loadDatasetCases(currentDatasetName, els.collectionSelect.value);
-      
+         
+          // RECORD which table is active (for interactiveState restore)
+          currentCollectionName = els.collectionSelect.value;
+                 
           // Keep progress counters in range
           curIndex = 0;
           epoch = 0;
