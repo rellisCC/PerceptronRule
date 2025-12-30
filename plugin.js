@@ -224,7 +224,7 @@
 
   // Training state
   let currentDatasetName = null;
-  let cases = []; // [{id, feat1, feat2, Sentiment}]
+  let cases = []; // [{id, feat1, feat2, label}]
   let curIndex = 0;
   let epoch = 0;
   let showingAll = false;
@@ -241,8 +241,8 @@
   // Expects sample-data.js defines SAMPLE_DATASETS array
   // with a dataset having:
   //   name: "Sample Dataset"
-  //   attrs: [{name:"feat1"}, {name:"feat2"}, {name:"Sentiment"}]
-  //   cases: [{feat1:0,feat2:2,Sentiment:-1, Text:"..."}, ...]  (Text optional)
+  //   attrs: [{name:"feat1"}, {name:"feat2"}, {name:"label"}]
+  //   cases: [{feat1:0,feat2:2,label:-1, Text:"..."}, ...]  (Text optional)
   const SAMPLE_NAME = "Sample Dataset";
   const SAMPLE_SPEC = (window.SAMPLE_DATASETS || []).find(d => d.name === SAMPLE_NAME);
 
@@ -413,7 +413,7 @@ function predFromScore(s) {
     // Standard perceptron update on mistake:
     // w <- w + lr * y * x
     // c <- c + lr * y
-    const y = pt.Sentiment;
+    const y = pt.label;
     const dw1 = lr * y * pt.feat1;
     const dw2 = lr * y * pt.feat2;
     const dc = lr * y;
@@ -428,7 +428,7 @@ function predFromScore(s) {
   function isMistake(pt) {
     const s = scorePoint(pt);
     const yhat = predFromScore(s);
-    return yhat !== pt.Sentiment;
+    return yhat !== pt.label;
   }
 
  // ----------------------------
@@ -1021,7 +1021,7 @@ if (oldLabel && newLabel) {
 
 
 function drawPoint(pt, isCurrent) {
-  const positive = (pt.Sentiment === 1);
+  const positive = (pt.label === 1);
   const r = isCurrent ? 8 : 5;
 
   els.viz.appendChild(svgEl("circle", {
@@ -1143,7 +1143,7 @@ function renderViz() {
    // Normal case display
     const s = scorePoint(pt);
     const yhat = predFromScore(s);
-    const mistake = (yhat !== pt.Sentiment);
+    const mistake = (yhat !== pt.label);
 
     els.ptInfo.textContent = `${pt.ID || ""}(${pt.feat1}, ${pt.feat2})`;
     els.epochInfo.textContent = String(epoch);
@@ -1151,7 +1151,7 @@ function renderViz() {
 
    // els.scoreInfo.textContent = s.toFixed(3);
     els.predInfo.textContent = (yhat === 1 ? "+1 (Positive)" : "-1 (Negative)");
-    els.sentInfo.textContent = (pt.Sentiment === 1 ? "+1 (Positive)" : "-1 (Negative)");
+    els.sentInfo.textContent = (pt.label === 1 ? "+1 (Positive)" : "-1 (Negative)");
   //  els.mistakeInfo.textContent = mistake ? "YES" : "no";
    if (!awaitingImprove) els.deltaInfo.textContent = "";
 
@@ -1242,8 +1242,8 @@ function renderViz() {
     cases.forEach(pt => {
       const s = scorePoint(pt);
       const yhat = predFromScore(s);
-      if (yhat === pt.Sentiment) correct += 1;
-      const diff = (pt.Sentiment - s);
+      if (yhat === pt.label) correct += 1;
+      const diff = (pt.label - s);
       sumSq += diff * diff;
     });
 
@@ -1279,7 +1279,7 @@ function renderViz() {
     // Apply perceptron update + show the deltas
     const lr = Number(els.lr.value);
     const sBefore = scorePoint(pt);
-    const y = pt.Sentiment;
+    const y = pt.label;
     const yhat = predFromScore(sBefore);
 
     const deltas = perceptronUpdate(pt, lr);
@@ -1308,21 +1308,21 @@ els.deltaInfo.innerHTML = `
     
   <div class="mathblock">
     <div class="mathline"><b>w1 adjustment</b></div>
-    <div class="mathline small">New w1 = Old w1 + LearnRate × TrueSentiment × feat1</div>
+    <div class="mathline small">New w1 = Old w1 + LearnRate × TrueLabel × feat1</div>
     <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat1}</div>
     <div class="mathline small"><b> New w1 = ${model.w1.toFixed(2)}</b></div>
   </div>
 
   <div class="mathblock">
     <div class="mathline"><b>w2 adjustment</b></div>
-    <div class="mathline small">New w2 = Old w2 + LearnRate × TrueSentiment × feat2</div>
+    <div class="mathline small">New w2 = Old w2 + LearnRate × TrueLabel × feat2</div>
     <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat2}</div>
     <div class="mathline small"><b>New w2 = ${model.w2.toFixed(2)}</b></div>
   </div>
 
   <div class="mathblock">
     <div class="mathline"><b>c adjustment</b></div>
-    <div class="mathline small">New c = Old c + LearnRate × TrueSentiment</div>
+    <div class="mathline small">New c = Old c + LearnRate × TrueLabel</div>
     <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
     <div class="mathline small"><b> New c = ${model.c.toFixed(2)}</b></div>
   </div>
@@ -1424,7 +1424,7 @@ els.deltaInfo.innerHTML = `
          cases = SAMPLE_SPEC.cases.map(row => ({
            feat1: Number(row.feat1),
            feat2: Number(row.feat2),
-           Sentiment: Number(row.Sentiment) >= 0 ? 1 : -1,
+           label: Number(row.label) >= 0 ? 1 : -1,
            Text: row.Text || "",
            ID: row.ID || ""
          }));
