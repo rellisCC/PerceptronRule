@@ -1232,7 +1232,13 @@ function renderViz() {
 
       async function refreshDatasetList() {
         const dcs = await listCODAPDatasets();
-      
+        const sampleExists = dcs.some(dc => dc.name === SAMPLE_NAME);
+
+        // Enable / disable Reset Sample button
+        if (els.resetSampleBtn) {
+          els.resetSampleBtn.disabled = !sampleExists;
+        }
+         
         // Clear dropdown
         els.datasetSelect.innerHTML = "";
       
