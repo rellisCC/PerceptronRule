@@ -1230,11 +1230,42 @@ function renderViz() {
       });
   }
 
-  async function refreshDatasetList() {
-    const datasetList = await listCODAPDatasets();
-    setDatasetUIOptions(datasetList);
-    setStatus(`Connected ✓  •  Found ${datasetList.length} CODAP dataset(s)`);
-  }
+      async function refreshDatasetList() {
+        const dcs = await listCODAPDatasets();
+      
+        // Clear dropdown
+        els.datasetSelect.innerHTML = "";
+      
+        // No datasets at all
+        if (!dcs.length) {
+          const opt = document.createElement("option");
+          opt.textContent = "Awaiting datset load or creation";
+          opt.disabled = true;
+          opt.selected = true;
+          els.datasetSelect.appendChild(opt);
+      
+          currentDatasetName = null;
+          return;
+        }
+      
+        // Populate dropdown
+        dcs.forEach(dc => {
+          const opt = document.createElement("option");
+          opt.value = dc.name;
+          opt.textContent = dc.name;
+          els.datasetSelect.appendChild(opt);
+        });
+      
+        // Prefer Sample Dataset only if it exists
+        const sampleExists = dcs.some(dc => dc.name === SAMPLE_NAME);
+        if (sampleExists) {
+          els.datasetSelect.value = SAMPLE_NAME;
+          currentDatasetName = SAMPLE_NAME;
+        } else {
+          currentDatasetName = els.datasetSelect.value;
+        }
+      }
+
 
   async function chooseDataset(name) {
     currentDatasetName = name;
