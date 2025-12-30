@@ -14,6 +14,8 @@
 
   const els = {
     datasetSelect: $("#datasetSelect"),
+    collectionField: $("#collectionField"),
+    collectionSelect: $("#collectionSelect"),
     refreshBtn: $("#refreshBtn"),
     loadSampleBtn: $("#loadSampleBtn"),
     dataStatus: $("#dataStatus"),
@@ -272,8 +274,44 @@ async function listCODAPDatasets() {
     .filter(dc => dc.name);
 }
 
+         function baseName(attrName) {
+        return String(attrName).split(":")[0].trim();
+      }
+      
+      async function getCollectionAttrs(datasetName, collName) {
+        const res = await codapRequest("get", `dataContext[${datasetName}].collection[${collName}].attributeList`);
+      
+        // attributeList can vary by CODAP version; normalize to an array of {name}
+        let attrs = [];
+        if (Array.isArray(res.values)) attrs = res.values;
+        else if (res.values && Array.isArray(res.values.attributes)) attrs = res.values.attributes;
+      
+        return attrs
+          .map(a => a && a.name)
+          .filter(Boolean);
+      }
+      
+      async function findMatchingCollections(datasetName, collections) {
+        const REQUIRED = ["feat1", "feat2", "label"]; // base keys required for training
+      
+        const matches = [];
+      
+        for (const c of collections) {
+          const collName = c && c.name;
+          if (!collName) continue;
+      
+          const attrNames = await getCollectionAttrs(datasetName, collName);
+          const bases = new Set(attrNames.map(baseName));
+      
+          const ok = REQUIRED.every(k => bases.has(k));
+          if (ok) matches.push(collName);
+        }
+      
+        return matches;
+      }
 
-   async function loadDatasetCases(datasetName) {
+
+   async function loadDatasetCases(datasetName, collNameOverride) {
      const collectionsRes = await codapRequest("get", `dataContext[${datasetName}].collectionList`);
    
      // collectionList can be: values: [{name...}, ...] OR values: { collections: [...] }
@@ -286,7 +324,7 @@ async function listCODAPDatasets() {
    
      if (!collections.length) throw new Error("No collections found in dataset.");
    
-     const collName = collections[0].name;
+     const collName = collNameOverride || collections[0].name;
 
     const casesRes = await codapRequest(
   "get",
@@ -1210,8 +1248,50 @@ function renderViz() {
         cases = [];
       }
     } else {
-      cases = await loadDatasetCases(name);
+  // Determine which collection(s) inside this dataset match our required schema.
+  const collectionsRes = await codapRequest("get", `dataContext[${name}].collectionList`);
+
+  let collections = [];
+  if (Array.isArray(collectionsRes.values)) collections = collectionsRes.values;
+  else if (collectionsRes.values && Array.isArray(collectionsRes.values.collections)) collections = collectionsRes.values.collections;
+
+  const matching = await findMatchingCollections(name, collections);
+
+  // 0 matches: show helpful message and stop
+  if (matching.length === 0) {
+    cases = [];
+    if (els.collectionField) els.collectionField.style.display = "none";
+    setModelStatus(
+      `No usable table found in "${name}". ` +
+      `Need columns feat1, feat2, and label (names may include a suffix after ":").`
+    );
+    renderViz();
+    updateCurrentPointPanel();
+    return;
+  }
+
+  // 1 match: auto-select and hide the table dropdown
+  if (matching.length === 1) {
+    if (els.collectionField) els.collectionField.style.display = "none";
+    cases = await loadDatasetCases(name, matching[0]);
+  } else {
+    // 2+ matches: show dropdown so user chooses
+    if (els.collectionSelect) {
+      els.collectionSelect.innerHTML = "";
+      matching.forEach(coll => {
+        const opt = document.createElement("option");
+        opt.value = coll;
+        opt.textContent = coll;
+        els.collectionSelect.appendChild(opt);
+      });
+      els.collectionSelect.value = matching[0];
     }
+    if (els.collectionField) els.collectionField.style.display = "";
+
+    cases = await loadDatasetCases(name, matching[0]);
+  }
+}
+
 
     if (!cases.length) {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
@@ -1452,6 +1532,27 @@ els.deltaInfo.innerHTML = `
         setModelStatus(`Dataset load error: ${e.message}`);
       }
     });
+
+            els.collectionSelect?.addEventListener("change", async () => {
+        if (!currentDatasetName) return;
+        try {
+          cases = await loadDatasetCases(currentDatasetName, els.collectionSelect.value);
+      
+          // Keep progress counters in range
+          curIndex = 0;
+          epoch = 0;
+          awaitingImprove = false;
+          showingAll = !!els.showAllCases?.checked;
+      
+          setModelStatus(`Loaded ${cases.length} cases from "${currentDatasetName}" (${els.collectionSelect.value}).`);
+          renderViz();
+          updateCurrentPointPanel();
+        } catch (e) {
+          setModelStatus(`Table load error: ${e.message}`);
+        }
+      });
+
+     
 const toggle = document.querySelector("#toggleMath");
 const mathCard = document.querySelector("#mathCard");
 
