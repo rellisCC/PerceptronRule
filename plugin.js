@@ -364,6 +364,11 @@ return found.map(c => {
 const values = SAMPLE_SPEC.cases.map(row => {
   const v = { ...row };
 
+     // Backward-compat: if an older spec uses Sentiment, map it into label
+  if (v.label === undefined && v.Sentiment !== undefined) {
+    v.label = v.Sentiment;
+  }
+   
   // If attrs include colon labels like "feat1: Cbest", copy from base key "feat1"
   (SAMPLE_SPEC.attrs || []).forEach(a => {
     const attrName = a.name;
