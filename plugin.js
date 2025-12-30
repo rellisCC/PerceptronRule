@@ -144,41 +144,40 @@
      if (s.prevLine && typeof s.prevLine === "object") model.prevLine = s.prevLine;
    }
 
-   function phoneHandler(request, callback) {
-     // CODAP will call this when saving the document.
-     if (request && request.action === "get" && request.resource === "interactiveState") {
-       callback({ success: true, values: exportInteractiveState() });
-       return;
-     }
-
-       // CODAP will call this when opening a saved/shared document to restore state.
+         function phoneHandler(request, callback) {
+           // CODAP will call this when saving the document.
+           if (request && request.action === "get" && request.resource === "interactiveState") {
+          callback({ success: true, values: exportInteractiveState() });
+          return;
+        }
+      
+           // CODAP will call this when opening a saved/shared document to restore state.
         if (request && request.action === "set" && request.resource === "interactiveState") {
-          // CODAP typically sends the saved object as request.values
           const state = request.values?.interactiveState ?? request.values;
-            importInteractiveState(state);
+          importInteractiveState(state);
       
           const ds = currentDatasetName || SAMPLE_NAME;
+      
+          chooseDataset(ds)
+            .then(() => {
+              syncSlidersToModel();
+              updateSliderLabels();
+              renderViz();
+              updateCurrentPointPanel();
+              callback({ success: true });
+            })
+            .catch((e) => {
+              setModelStatus(`Restore load error: ${e.message}`);
+              callback({ success: false, values: { error: e.message } });
+            });
+      
+          return;
+        }
+      
+           // Default: say “ok” to anything else.
+        callback({ success: true });
+      }
 
-            chooseDataset(ds)
-              .then(() => {
-                // Now reflect restored state in the UI
-                syncSlidersToModel();
-                updateSliderLabels();
-                renderViz();
-                updateCurrentPointPanel();
-            
-                callback({ success: true });
-              })
-              .catch((e) => {
-                setModelStatus(`Restore load error: ${e.message}`);
-                callback({ success: false, values: { error: e.message } });
-              });
-            
-            return;
-            
-                 // Default: say “ok” to anything else (we’re not using inbound calls yet).
-                 callback({ success: true });
-               }
 
   async function connectToCODAP() {
     // Must be embedded in CODAP (iFrame). iframe-phone provides the RPC transport.
@@ -1288,7 +1287,7 @@ function renderViz() {
            currentDatasetName = els.datasetSelect.value;
          }
 
-
+      }
 
   async function chooseDataset(name) {
     currentDatasetName = name;
