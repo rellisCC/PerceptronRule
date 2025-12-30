@@ -18,6 +18,7 @@
     collectionSelect: $("#collectionSelect"),
     refreshBtn: $("#refreshBtn"),
     loadSampleBtn: $("#loadSampleBtn"),
+    resetSampleBtn: $("#resetSampleBtn"),
     dataStatus: $("#dataStatus"),
 
     w1: $("#w1"),
@@ -1246,7 +1247,7 @@ function renderViz() {
       // but if it already exists, we can use it.
       const dcs = await listCODAPDatasets();
       if (dcs.some(dc => dc.name === SAMPLE_NAME)) {
-        cases = await loadDatasetCases(SAMPLE_NAME);
+        cases = await loadDatasetCases(SAMPLE_NAME, "Sample Dataset Cases");
       } else {
         cases = [];
       }
@@ -1491,42 +1492,7 @@ els.deltaInfo.innerHTML = `
     els.btnFail.addEventListener("click", studentSaysFail);
     els.btnNextAfterImprove.addEventListener("click", afterImproveNext);
 
-    els.refreshBtn.addEventListener("click", async () => {
-      try {
-        await refreshDatasetList();
-      } catch (e) {
-        setStatus(`Error refreshing datasets: ${e.message}`);
-      }
-    });
-
-    els.loadSampleBtn.addEventListener("click", async () => {
-      try {
-        setStatus("Creating/resetting sample dataset in CODAP…");
-        const name = await createOrResetSampleDataset();
-         // Use the sample cases directly for the training view (don’t rely on reading back from CODAP yet)
-         cases = SAMPLE_SPEC.cases.map(row => ({
-           feat1: Number(row.feat1),
-           feat2: Number(row.feat2),
-           label: Number(row.label) >= 0 ? 1 : -1,
-           Text: row.Text || "",
-           ID: row.ID || ""
-         }));
-         
-         curIndex = 0;
-         epoch = 0;
-         awaitingImprove = false;
-         showingAll = false;
-         
-         setModelStatus(`Loaded ${cases.length} cases from "Sample Dataset".`);
-         renderViz();
-         updateCurrentPointPanel();
-        await refreshDatasetList();
-        els.datasetSelect.value = name;
-        setStatus(`Sample dataset loaded ✓ (${cases.length} cases)`);
-      } catch (e) {
-        setStatus(`Error loading sample dataset: ${e.message}`);
-      }
-    });
+    
 
     els.datasetSelect.addEventListener("change", async () => {
       try {
@@ -1555,6 +1521,59 @@ els.deltaInfo.innerHTML = `
         }
       });
 
+
+           els.refreshBtn.addEventListener("click", async () => {
+              await refreshDatasetList();
+              setStatus("Dataset list updated.");
+      });
+      
+      els.loadSampleBtn.addEventListener("click", async () => {
+        try {
+          setStatus("Loading sample dataset…");
+      
+          const dcs = await listCODAPDatasets();
+          if (!dcs.some(dc => dc.name === SAMPLE_NAME)) {
+            setStatus("Creating sample dataset in CODAP…");
+            await createOrResetSampleDataset();
+          }
+      
+          await refreshDatasetList();
+          els.datasetSelect.value = SAMPLE_NAME;
+          currentDatasetName = SAMPLE_NAME;
+      
+          await chooseDataset(SAMPLE_NAME);
+      
+          setStatus(`Sample dataset loaded ✓ (${cases.length} cases)`);
+        } catch (e) {
+          setStatus(`Error loading sample dataset: ${e.message}`);
+        }
+      });
+      
+      els.resetSampleBtn?.addEventListener("click", async () => {
+        const msg =
+          'Are you sure? Any changes you made to that dataset will be wiped! ' +
+          'Only proceed if you are SURE you want to start over.';
+      
+        const ok = window.confirm(msg);
+        if (!ok) return;
+      
+        try {
+          setStatus("Resetting sample dataset…");
+      
+          await createOrResetSampleDataset();
+          await refreshDatasetList();
+      
+          els.datasetSelect.value = SAMPLE_NAME;
+          currentDatasetName = SAMPLE_NAME;
+      
+          await chooseDataset(SAMPLE_NAME);
+      
+          setStatus(`Sample dataset reset ✓ (${cases.length} cases)`);
+        } catch (e) {
+          setStatus(`Error resetting sample dataset: ${e.message}`);
+        }
+      });
+     
      
 const toggle = document.querySelector("#toggleMath");
 const mathCard = document.querySelector("#mathCard");
