@@ -1532,7 +1532,9 @@ els.deltaInfo.innerHTML = `
   // Boot
   // ----------------------------
   async function boot() {
-    updateSliderLabels();
+    console.log("BOOT start", "iframePhone?", !!window.iframePhone, "href:", window.location.href);
+
+     updateSliderLabels();
 
     els.alertOk.addEventListener("click", () => els.alertDlg.close());
     els.evalClose.addEventListener("click", () => {
