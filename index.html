@@ -29,7 +29,7 @@
       <div class="hint">
         Choose <b>Sample Dataset</b> and click <b>Load/Reset Sample Dataset</b> to create starter data in CODAP.
         Or select an existing dataset that includes columns:
-        <code>ID</code>,<code>feat1</code>, <code>feat2</code>, <code>Sentiment</code> (Neg=-1; Pos=+1).
+        <code>ID</code>,<code>feat1</code>, <code>feat2</code>, <code>label</code> (Neg=-1; Pos=+1).
       </div>
 
       <div class="btnrow">
@@ -88,7 +88,7 @@
 
       <div class="panel-row">
         <div><b>Model prediction</b>: <span class="mono" id="predInfo">—</span></div>
-        <div><b>True sentiment</b>: <span class="mono" id="sentInfo">—</span></div>
+        <div><b>True label</b>: <span class="mono" id="sentInfo">—</span></div>
       </div>
     </div>
     <div class="hint">
@@ -140,7 +140,7 @@
         <div class="dlg-title">Model Evaluation</div>
         <div class="dlg-body">
           <div class="mono" id="evalSummary">—</div>
-          <div class="hint">Accuracy uses sign(score). MSE uses (Sentiment - score)^2 averaged over all cases.</div>
+          <div class="hint">Accuracy uses sign(score). MSE uses (label - score)^2 averaged over all cases.</div>
         </div>
         <div class="dlg-actions">
           <button id="evalClose"><b>Go back to training</b></button>
