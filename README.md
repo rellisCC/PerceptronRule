@@ -13,9 +13,9 @@ This is a lightweight CODAP Data Interactive Plugin that implements a one-point-
   - MSE (mean squared error on raw score vs Sentiment)
 
 ## Required dataset columns (for student-created datasets)
-- Cbest (numeric)
-- Cbad (numeric)
-- Sentiment (numeric, should be -1 or +1)
+- feat1 (numeric)
+- feat2 (numeric)
+- label (numeric, should be -1 or +1)
 
 ## How to run (local)
 1) Start a static server in this folder, e.g.:
