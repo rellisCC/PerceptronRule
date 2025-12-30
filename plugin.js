@@ -333,7 +333,7 @@ return found.map(c => {
     feat1: f1,
     feat2: f2,
 
-    Sentiment: Number(v.Sentiment ?? v.sentiment ?? v.label ?? 0),
+    label: Number(v.label ?? v.Sentiment ?? v.sentiment ?? v.Label ?? 0),
     Text: v.Text ?? v.text ?? ""
   };
 });
@@ -1216,10 +1216,10 @@ function renderViz() {
     if (!cases.length) {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
     } else {
-      // Ensure Sentiment is ±1
+      // Ensure label is ±1
       cases = cases.map(pt => ({
         ...pt,
-        Sentiment: (pt.Sentiment >= 0 ? 1 : -1)
+        label: (pt.label >= 0 ? 1 : -1)
       }));
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
       epoch = Math.max(0, epoch);
