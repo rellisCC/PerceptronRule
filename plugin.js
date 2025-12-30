@@ -157,19 +157,28 @@
           const state = request.values?.interactiveState ?? request.values;
             importInteractiveState(state);
       
-          // Make sure restored state is reflected in the UI immediately
-          syncSlidersToModel();
-          updateSliderLabels();
-          renderViz();
-          updateCurrentPointPanel();
-      
-          callback({ success: true });
-          return;
-        }
+          const ds = currentDatasetName || SAMPLE_NAME;
 
-     // Default: say “ok” to anything else (we’re not using inbound calls yet).
-     callback({ success: true });
-   }
+            chooseDataset(ds)
+              .then(() => {
+                // Now reflect restored state in the UI
+                syncSlidersToModel();
+                updateSliderLabels();
+                renderViz();
+                updateCurrentPointPanel();
+            
+                callback({ success: true });
+              })
+              .catch((e) => {
+                setModelStatus(`Restore load error: ${e.message}`);
+                callback({ success: false, values: { error: e.message } });
+              });
+            
+            return;
+            
+                 // Default: say “ok” to anything else (we’re not using inbound calls yet).
+                 callback({ success: true });
+               }
 
   async function connectToCODAP() {
     // Must be embedded in CODAP (iFrame). iframe-phone provides the RPC transport.
@@ -211,7 +220,9 @@
      // Restore any previously-saved interactive state (e.g., when opening a shared copy)
       try {
         const frame = await codapRequest("get", "interactiveFrame");
-        importInteractiveState(frame?.values?.savedState);
+        const saved = frame?.values?.savedState;
+        importInteractiveState(saved);
+        if (saved) await chooseDataset(currentDatasetName || SAMPLE_NAME);
       
         // Reflect restored state in the UI
         syncSlidersToModel();
@@ -1296,7 +1307,8 @@ function renderViz() {
         cases = [];
       }
     } else {
-  // Determine which collection(s) inside this dataset match our required schema.
+  
+       // Determine which collection(s) inside this dataset match our required schema.
   const collectionsRes = await codapRequest("get", `dataContext[${name}].collectionList`);
 
   let collections = [];
@@ -1323,7 +1335,8 @@ function renderViz() {
     if (els.collectionField) els.collectionField.style.display = "none";
     cases = await loadDatasetCases(name, matching[0]);
   } else {
-    // 2+ matches: show dropdown so user chooses
+    
+     // 2+ matches: show dropdown so user chooses
     if (els.collectionSelect) {
       els.collectionSelect.innerHTML = "";
       matching.forEach(coll => {
@@ -1334,6 +1347,16 @@ function renderViz() {
       });
       els.collectionSelect.value = matching[0];
     }
+
+     const chosen = (currentCollectionName && matching.includes(currentCollectionName))
+      ? currentCollectionName
+      : matching[0];
+
+    els.collectionSelect.value = chosen;
+    currentCollectionName = chosen;
+  }
+
+     
     if (els.collectionField) els.collectionField.style.display = "";
 
     cases = await loadDatasetCases(name, matching[0]);
@@ -1344,15 +1367,18 @@ function renderViz() {
     if (!cases.length) {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
     } else {
+       
       // Ensure label is ±1
       cases = cases.map(pt => ({
         ...pt,
         label: (pt.label >= 0 ? 1 : -1)
       }));
+       
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
       epoch = Math.max(0, epoch);
       awaitingImprove = false;
       showingAll = !!els.showAllCases?.checked;
+       
       setModelStatus(`Loaded ${cases.length} cases from "${name}".`);
       renderViz();
       updateCurrentPointPanel();
