@@ -1109,7 +1109,8 @@ function drawPoint(pt, isCurrent) {
      "font-size": isCurrent ? 13 : 11,
      "font-weight": isCurrent ? 700 : 400,
      fill: "#111",
-     opacity: isCurrent ? 1 : 0.75
+     opacity: isCurrent ? 1 : 0.75,
+     "pointer-events": "none"
    });
    label.textContent = String(pt.ID);
    els.viz.appendChild(label);
