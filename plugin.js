@@ -382,7 +382,7 @@ return found.map(c => {
 
    
   return {
-    id: c.id,
+    id: Number(c.id ?? c.case?.id ?? c.caseID ?? c.caseId ?? c.case?.caseID ?? c.case?.caseId),
     ID: v.ID ?? v.id ?? raw.ID ?? raw.id ?? String(c.id ?? ""),
 
     // internal feature names (your code uses these)
