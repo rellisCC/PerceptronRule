@@ -13,8 +13,8 @@
 
 <body>
   <header>
-    <div class="title">Perceptron Trainer</div>
-    <div class="subtitle">Train one point at a time • Perceptron updates when it makes mistakes</div>
+    <div class="title">Can you find the best feature weights to use to correctly classify data into two categories?</div>
+    <div class="subtitle">Use one point at a time and the Perceptron Rule to adjust feature weights!</div>
   </header>
 
   <section class="row">
@@ -39,9 +39,9 @@
       
       <div class="hint">
         Click <b>Load Sample Dataset</b> use the pre-made sample. 
-        Alternatively, you can create your own data table with columns:
-        <code>ID</code>, <code>feat1</code>, <code>feat2</code>, and <code>label</code> (Neg=-1; Pos=+1).
-        If you create your own, click <b>Find All Datasets</b> and then select your dataset name from the dropdown.
+        Alternatively, you can create your own data table with columns
+        <code>ID</code>, <code>feat1</code>, <code>feat2</code>, and <code>label</code> (Neg=-1; Pos=+1)
+        and then click <b>Find All Datasets</b> to add it to the dropdown menu.
       </div>
 
 
@@ -92,7 +92,7 @@
     <div class="panel">
       <div class="panel-row">
         <div><b>Current point</b>: <span class="mono" id="ptInfo">—</span></div>
-        <div><b>Epoch</b>: <span class="mono" id="epochInfo">0</span> &nbsp; <b>Index</b>: <span class="mono" id="indexInfo">—</span></div>
+        <div><b>Epoch</b>: <span class="mono" id="epochInfo">0</span> &nbsp; <b>Case</b>: <span class="mono" id="indexInfo">—</span></div>
       </div>
 
       <div class="panel-row">
@@ -120,9 +120,9 @@
 
     <div class="btnrow">
       <span>Step through the weight adjustment process:</span>
-      <button id="btnCorrect" class="learn-btn learn-good">✔︎ Rule correctly predicts point. Proceed to next point.</button>
-      <button id="btnFail" class="learn-btn learn-bad">❌ Rule fails. Must improve!</button>
-      <button id="btnNextAfterImprove" class="learn-btn learn-improve"disabled>🔧 Rule improved. Check next point.</button>
+      <button id="btnCorrect" class="learn-btn learn-good">✔︎ Model correctly predicts point. Proceed to next point.</button>
+      <button id="btnFail" class="learn-btn learn-bad">❌ Model fails. Must improve!</button>
+      <button id="btnNextAfterImprove" class="learn-btn learn-improve"disabled>🔧 Model improved. Check next point.</button>
     </div>
 
     <div class="hint">
