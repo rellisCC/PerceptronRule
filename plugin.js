@@ -56,7 +56,11 @@
 
     evalDlg: $("#evalDlg"),
     evalSummary: $("#evalSummary"),
-    evalClose: $("#evalClose")
+    evalCases: $("#evalCases"),
+    evalAccuracy: $("#evalAccuracy"),
+    evalMSE: $("#evalMSE"),
+    evalClose: $("#evalClose"),
+     
   };
 
   function setStatus(text) {
