@@ -1096,7 +1096,11 @@ function drawPoint(pt, isCurrent) {
        console.log("DOT CLICK", { id: pt.id, ID: pt.ID, dataset: currentDatasetName }); 
        const dcName = currentDatasetName || SAMPLE_NAME;
        const caseId = Number(pt.id ?? pt.ID);
-       codapRequest("create", `dataContext[${dcName}].selectionList`, [caseId]);
+       const collName = (dcName === SAMPLE_NAME) 
+          ? "Sample Dataset Cases" 
+          : (currentCollectionName || els.collectionSelect?.value);
+       codapRequest("create", `dataContext[${dcName}].collection[${collName}].selectionList`, [caseId]);
+
      });
    }
 
