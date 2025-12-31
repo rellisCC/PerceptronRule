@@ -1550,7 +1550,9 @@ els.deltaInfo.innerHTML = `
     els.evalAccuracy.textContent = `${(100 * r.acc).toFixed(1)}%`;
     els.evalMSE.textContent = r.mse.toFixed(3);
 
-    if (els.evalDlg && els.evalDlg.showModal) els.evalDlg.show();
+    if (els.evalDlg?.showModal) els.evalDlg.showModal();
+    else if (els.evalDlg?.show) els.evalDlg.show();
+
   }
 
   // ----------------------------
