@@ -1080,13 +1080,24 @@ function drawPoint(pt, isCurrent) {
   const positive = (pt.label === 1);
   const r = isCurrent ? 8 : 5;
 
-  els.viz.appendChild(svgEl("circle", {
-    cx: sx(pt.feat1),
-    cy: sy(pt.feat2),
-    r,
-    fill: positive ? "orange" : "purple",
-    opacity: isCurrent ? 1 : 0.65
-  }));
+  const dot = svgEl("circle", {
+     cx: sx(pt.feat1),
+     cy: sy(pt.feat2),
+     r,
+     fill: positive ? "orange" : "purple",
+     opacity: isCurrent ? 1 : 0.65
+   });
+   els.viz.appendChild(dot);
+   
+   if (isCurrent && pt && pt.id != null) {
+     dot.style.cursor = "pointer";
+     dot.addEventListener("click", (evt) => {
+       evt.stopPropagation(); // prevent any background click handlers later
+       const dcName = currentDatasetName || SAMPLE_NAME;
+       codapRequest("create", `dataContext[${dcName}].selectionList`, [Number(pt.id)]);
+     });
+   }
+
  
    // ID label
    const baseX = sx(pt.feat1);
