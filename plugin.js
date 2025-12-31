@@ -1093,8 +1093,10 @@ function drawPoint(pt, isCurrent) {
      dot.style.cursor = "pointer";
      dot.addEventListener("click", (evt) => {
        evt.stopPropagation(); // prevent any background click handlers later
+       console.log("DOT CLICK", { id: pt.id, ID: pt.ID, dataset: currentDatasetName }); 
        const dcName = currentDatasetName || SAMPLE_NAME;
-       codapRequest("create", `dataContext[${dcName}].selectionList`, [Number(pt.id)]);
+       const caseId = Number(pt.id ?? pt.ID);
+       codapRequest("create", `dataContext[${dcName}].selectionList`, [caseId]);
      });
    }
 
