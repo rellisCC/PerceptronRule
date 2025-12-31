@@ -148,8 +148,19 @@
       <dialog id="evalDlg">
         <div class="dlg-title">Model Evaluation</div>
         <div class="dlg-body">
-          <div class="mono" id="evalSummary">—</div>
-          <div class="hint">Accuracy uses sign(score). MSE uses (label - score)^2 averaged over all cases.</div>
+          <div class="mono" id="evalSummary">
+          <div><b>Cases:</b> <span id="evalCases">-</span></div>
+
+          <div style="margin-top:10px;">
+          <div><b>Accuracy:</b> <span id="evalAccuracy">-</span></div>
+          <div class="hint">Accuracy calculates the percent of cases the model predicts correctly.</div>
+          </div>
+
+          <div style="margin-top:10px;">
+          <div><b>Mean Squared Error:</b> <span id="evalMSE">-</span></div>
+          <div class="hint"> Mean Squared Error calculates how close the model’s predictions are to the true labels, not just whether they are correct.</div>
+          </div>
+         </div>
         </div>
         <div class="dlg-actions">
           <button id="evalClose"><b>Go back to training</b></button>
