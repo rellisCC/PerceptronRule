@@ -1682,7 +1682,7 @@ if (toggle && mathCard) {
       updateCurrentPointPanel();
     } catch (e) {
       connected = false;
-      setStatus(`Not connected. Open this plugin *inside CODAP* using ?di=…  (${e.message})`);
+      setStatus(`Connected, but startup failed: ${e.message}`);
       // Still render something
       syncSlidersToModel();
       renderViz();
