@@ -1307,7 +1307,17 @@ function renderViz() {
     } else {
   
        // Determine which collection(s) inside this dataset match our required schema.
-  const collectionsRes = await codapRequest("get", `dataContext[${name}].collectionList`);
+  let collectionsRes;
+      try {
+        collectionsRes = await codapRequest("get", `dataContext[${name}].collectionList`);
+      } catch (e) {
+        // If the chosen CODAP dataset doesn't exist yet, don't treat it as "not connected"
+        setModelStatus(`Dataset "${name}" not found in this document. Falling back to Sample Dataset.`);
+        els.datasetSelect.value = SAMPLE_NAME;
+        currentDatasetName = SAMPLE_NAME;
+        return chooseDataset(SAMPLE_NAME);
+}
+
 
   let collections = [];
   if (Array.isArray(collectionsRes.values)) collections = collectionsRes.values;
