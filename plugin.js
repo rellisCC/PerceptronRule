@@ -1089,7 +1089,7 @@ function drawPoint(pt, isCurrent) {
    });
    els.viz.appendChild(dot);
    
-   if (isCurrent && pt && pt.id != null) {
+   if (isCurrent && pt && (pt.id != null || pt.ID != null)) {
      dot.style.cursor = "pointer";
      dot.addEventListener("click", (evt) => {
        evt.stopPropagation(); // prevent any background click handlers later
