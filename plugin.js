@@ -1429,7 +1429,8 @@ function renderViz() {
       const s = scorePoint(pt);
       const yhat = predFromScore(s);
       if (yhat === pt.label) correct += 1;
-      const diff = (pt.label - s);
+       //NSU uses +-1 internally, which is consistent with the score scale
+      const diff = (label01ToSigned(pt.label) - s);
       sumSq += diff * diff;
     });
 
