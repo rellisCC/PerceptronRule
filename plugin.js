@@ -461,13 +461,10 @@ const SCORE_EPS = 1e-6;
 function predFromScore(s) {
   // Treat points *on the line* as positive.
   // Also treat tiny floating-point negatives as "on the line".
-  return s >= -SCORE_EPS ? 1 : 0; //1=Pos, 0=Neg
+  return s >= -SCORE_EPS ? 1 : -1;
 }
 
-   // Convert stored 0/1 labels into signed ±1 for perceptron math
-      function label01ToSigned(y01) {
-        return (y01 === 1) ? 1 : -1;
-      }
+
 
   function perceptronUpdate(pt, lr) {
      // Save the old line so we can fade it + draw arrows after learning
@@ -476,7 +473,7 @@ function predFromScore(s) {
     // Standard perceptron update on mistake:
     // w <- w + lr * y * x
     // c <- c + lr * y
-    const y = label01ToSigned(pt.label);
+    const y = pt.label;
     const dw1 = lr * y * pt.feat1;
     const dw2 = lr * y * pt.feat2;
     const dc = lr * y;
@@ -1231,8 +1228,8 @@ function renderViz() {
     els.indexInfo.textContent = String(curIndex + 1) + " / " + String(cases.length);
 
    // els.scoreInfo.textContent = s.toFixed(3);
-    els.predInfo.textContent = (yhat === 1 ? "1 (Positive)" : "0 (Negative)");
-    els.sentInfo.textContent = (pt.label === 1 ? "1 (Positive)" : "0 (Negative)");
+    els.predInfo.textContent = (yhat === 1 ? "+1 (Positive)" : "-1 (Negative)");
+    els.sentInfo.textContent = (pt.label === 1 ? "+1 (Positive)" : "-1 (Negative)");
   //  els.mistakeInfo.textContent = mistake ? "YES" : "no";
    if (!awaitingImprove) els.deltaInfo.textContent = "";
 
@@ -1400,10 +1397,10 @@ function renderViz() {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
     } else {
        
-      // Ensure label is 0 for Neg and 1 for Pos
+      // Ensure label is ±1
       cases = cases.map(pt => ({
         ...pt,
-        label: (pt.label > 0 ? 1 : 0)
+        label: (pt.label >= 0 ? 1 : -1)
       }));
        
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
@@ -1429,8 +1426,7 @@ function renderViz() {
       const s = scorePoint(pt);
       const yhat = predFromScore(s);
       if (yhat === pt.label) correct += 1;
-       //NSU uses +-1 internally, which is consistent with the score scale
-      const diff = (label01ToSigned(pt.label) - s);
+      const diff = (pt.label - s);
       sumSq += diff * diff;
     });
 
