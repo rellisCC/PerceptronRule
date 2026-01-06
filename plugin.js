@@ -1219,7 +1219,7 @@ function renderViz() {
     els.w1Val.textContent = Number(els.w1.value).toFixed(2);
     els.w2Val.textContent = Number(els.w2.value).toFixed(2);
     els.cVal.textContent = Number(els.c.value).toFixed(2);
-    els.lrVal.textContent = LR_STEPS[Number(els.lr.value)].toFixed(2);
+    els.lrVal.textContent = LR_STEPS[Number(els.lr.value)];
   }
 
   function updateCurrentPointPanel() {
