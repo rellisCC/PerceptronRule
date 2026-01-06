@@ -675,7 +675,7 @@ function drawAxes() {
 }
 
 function drawDecisionRegion() {
-  // Region where w1*feat1 + w2*feat2 + c >= 0 (orange)
+  // Region where w1*feat1 + w2*feat2 + c >= 0 (blue)
   // We approximate by filling polygon clipped to plot box.
   const w1 = model.w1, w2 = model.w2, c = model.c;
 
@@ -729,7 +729,7 @@ function drawDecisionRegion() {
   const d = poly.map((p, i) => `${i === 0 ? "M" : "L"} ${sx(p.x)} ${sy(p.y)}`).join(" ") + " Z";
   els.viz.appendChild(svgEl("path", {
     d,
-    fill: "rgba(255,165,0,0.25)",
+    fill: "rgba(3,169,244,0.25)",
     stroke: "none"
   }));
 }
@@ -987,7 +987,7 @@ let oldLabel = null;
 
 if (model.prevLineActive && model.prevLine) {
   oldSeg = drawLineForParams(model.prevLine, {
-    stroke: "#d97706",
+    stroke: "#03A9F4",
     "stroke-width": 2,
     opacity: 0.25
   });
@@ -1004,7 +1004,7 @@ if (model.prevLineActive && model.prevLine) {
 // ---- draw new line + label (always) ----
 const newParams = { w1: model.w1, w2: model.w2, c: model.c };
 const newSeg = drawLineForParams(newParams, {
-  stroke: "#d97706",
+  stroke: "#03A9F4",
   "stroke-width": 3,
   opacity: 1
 });
@@ -1108,7 +1108,7 @@ function drawPoint(pt, isCurrent) {
      cx: sx(pt.feat1),
      cy: sy(pt.feat2),
      r,
-     fill: positive ? "orange" : "purple",
+     fill: positive ? "#03A9F4" : "#d97706",
      opacity: isCurrent ? 1 : 0.65
    });
    els.viz.appendChild(dot);
