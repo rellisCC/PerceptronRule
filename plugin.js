@@ -464,9 +464,10 @@ function predFromScore(s) {
   return s >= -SCORE_EPS ? 1 : 0; //1=Pos, 0=Neg
 }
 
-   function signedLabel01(y01) {
-     return (y01 === 1) ? 1 : -1;
-   }
+   // Convert stored 0/1 labels into signed ±1 for perceptron math
+      function label01ToSigned(y01) {
+        return (y01 === 1) ? 1 : -1;
+      }
 
   function perceptronUpdate(pt, lr) {
      // Save the old line so we can fade it + draw arrows after learning
@@ -475,7 +476,7 @@ function predFromScore(s) {
     // Standard perceptron update on mistake:
     // w <- w + lr * y * x
     // c <- c + lr * y
-    const y = pt.label;
+    const y = label01ToSigned(pt.label);
     const dw1 = lr * y * pt.feat1;
     const dw2 = lr * y * pt.feat2;
     const dc = lr * y;
