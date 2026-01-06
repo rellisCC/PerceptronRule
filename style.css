@@ -167,3 +167,51 @@ dialog { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 #mathCard .mono {  font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;}
+
+/* =========================
+   Slider styling (purple)
+   ========================= */
+
+:root {
+  --slider-purple: #8B5CF6;
+}
+
+/* Track */
+input[type="range"] {
+  accent-color: var(--slider-purple); /* modern browsers */
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px;
+  background: rgba(139, 92, 246, 0.35);
+  border-radius: 4px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -5px;
+  width: 16px;
+  height: 16px;
+  background: var(--slider-purple);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: rgba(139, 92, 246, 0.35);
+  border-radius: 4px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--slider-purple);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
