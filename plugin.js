@@ -1054,17 +1054,34 @@ if (oldLabel && newLabel) {
     const W1 = model.w1, W2 = model.w2, Cc = model.c;
     const denom = (W1 * W1 + W2 * W2) || 1;
 
+   const cOnly =
+     model.prevLine &&
+     model.prevLine.w1 === model.w1 &&
+     model.prevLine.w2 === model.w2 &&
+     model.prevLine.c !== model.c;
+     
     for (const t of [0.25, 0.5, 0.75]) {
       const P = {
         x: O1.x + t * (O2.x - O1.x),
         y: O1.y + t * (O2.y - O1.y)
       };
 
-      const f = W1 * P.x + W2 * P.y + Cc;
-      const Q = {
-        x: P.x - (f * W1) / denom,
-        y: P.y - (f * W2) / denom
-      };
+      let Q;
+
+      if (cOnly && Math.abs(W2) > 1e-12) {
+        // c-only: move vertically to the new line (same x)
+        Q = {
+          x: P.x,
+          y: (-W1 * P.x - Cc) / W2
+        };
+      } else {
+        // default: projection onto new line (your current behavior)
+        const f = W1 * P.x + W2 * P.y + Cc;
+        Q = {
+          x: P.x - (f * W1) / denom,
+          y: P.y - (f * W2) / denom
+        };
+      }
 
       const x1 = sx(P.x), y1 = sy(P.y);
       const x2 = sx(Q.x), y2 = sy(Q.y);
