@@ -1184,20 +1184,10 @@ function renderViz() {
     updateSliderLabels();
   }
 
-  function updateModelFromSliders() {
-     const newW1 = Number(els.w1.value);
-     const newW2 = Number(els.w2.value);
-     const newC  = Number(els.c.value);
-   
-     const changed = (newW1 !== model.w1) || (newW2 !== model.w2) || (newC !== model.c);
-     if (changed) {
-       model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
-       model.prevLineActive = true;
-     }
-   
-     model.w1 = newW1;
-     model.w2 = newW2;
-     model.c  = newC;
+     function updateModelFromSliders() {
+     model.w1 = Number(els.w1.value);
+     model.w2 = Number(els.w2.value);
+     model.c  = Number(els.c.value);
    
      updateSliderLabels();
      renderViz();
@@ -1585,13 +1575,26 @@ els.deltaInfo.innerHTML = `
       renderViz();
     });
 
-    // Slider live updates
-    [els.w1, els.w2, els.c, els.lr].forEach(inp => {
-      inp.addEventListener("input", () => {
-        updateSliderLabels();
-        if (inp !== els.lr) updateModelFromSliders();
+    // The line
+     function capturePrevLine() {
+        model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
+        model.prevLineActive = true;
+      }
+      
+      // Capture old line once at start of slider drag (w1, w2, c only)
+      [els.w1, els.w2, els.c].forEach(inp => {
+        inp.addEventListener("pointerdown", () => {
+          capturePrevLine();
+        });
       });
-    });
+      
+      // Slider live updates
+      [els.w1, els.w2, els.c, els.lr].forEach(inp => {
+        inp.addEventListener("input", () => {
+          updateSliderLabels();
+          if (inp !== els.lr) updateModelFromSliders();
+        });
+      });
 
     // Buttons
     els.resetModelBtn.addEventListener("click", resetModel);
