@@ -245,6 +245,9 @@
   const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 0.4 };
   let model = { ...DEFAULT_MODEL };
 
+  // Learning rate steps (teaching-friendly, log-spaced)
+  const LR_STEPS = [0.001, 0.01, 0.1, 1];
+   
   // Training state
   let currentDatasetName = null;
   let currentCollectionName = null;
