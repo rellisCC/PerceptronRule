@@ -1185,13 +1185,25 @@ function renderViz() {
   }
 
   function updateModelFromSliders() {
-    model.w1 = Number(els.w1.value);
-    model.w2 = Number(els.w2.value);
-    model.c = Number(els.c.value);
-    updateSliderLabels();
-    renderViz();
-    updateCurrentPointPanel();
-  }
+     const newW1 = Number(els.w1.value);
+     const newW2 = Number(els.w2.value);
+     const newC  = Number(els.c.value);
+   
+     const changed = (newW1 !== model.w1) || (newW2 !== model.w2) || (newC !== model.c);
+     if (changed) {
+       model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
+       model.prevLineActive = true;
+     }
+   
+     model.w1 = newW1;
+     model.w2 = newW2;
+     model.c  = newC;
+   
+     updateSliderLabels();
+     renderViz();
+     updateCurrentPointPanel();
+   }
+
 
   function updateSliderLabels() {
     els.w1Val.textContent = Number(els.w1.value).toFixed(2);
