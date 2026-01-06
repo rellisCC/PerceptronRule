@@ -461,10 +461,12 @@ const SCORE_EPS = 1e-6;
 function predFromScore(s) {
   // Treat points *on the line* as positive.
   // Also treat tiny floating-point negatives as "on the line".
-  return s >= -SCORE_EPS ? 1 : -1;
+  return s >= -SCORE_EPS ? 1 : 0; //1=Pos, 0=Neg
 }
 
-
+   function signedLabel01(y01) {
+     return (y01 === 1) ? 1 : -1;
+   }
 
   function perceptronUpdate(pt, lr) {
      // Save the old line so we can fade it + draw arrows after learning
@@ -1397,10 +1399,10 @@ function renderViz() {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
     } else {
        
-      // Ensure label is ±1
+      // Ensure label is 0 for Neg and 1 for Pos
       cases = cases.map(pt => ({
         ...pt,
-        label: (pt.label >= 0 ? 1 : -1)
+        label: (pt.label > 0 ? 1 : 0)
       }));
        
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
