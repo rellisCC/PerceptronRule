@@ -242,7 +242,7 @@
   // ----------------------------
   // Data model
   // ----------------------------
-  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 0.6 };
+  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 0.4 };
   let model = { ...DEFAULT_MODEL };
 
   // Training state
