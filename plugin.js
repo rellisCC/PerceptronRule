@@ -153,7 +153,7 @@
        epoch,
        showAllCases: !!els.showAllCases?.checked,
        prevLineActive: !!model.prevLineActive,
-       prevLine: model.prevLine || null 
+       prevLine: model.prevLine || null, 
        
        // Scroll positions
        scroll: getScrollState()
