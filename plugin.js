@@ -76,6 +76,48 @@
     else alert(els.alertMsg.textContent);
   }
 
+     // ----------------------------
+  // Scroll state persistence
+  // ----------------------------
+  function getMainScrollY() {
+    return (
+      window.scrollY ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0
+    );
+  }
+
+  function setMainScrollY(y) {
+    window.scrollTo(0, Math.max(0, Number(y) || 0));
+  }
+
+  function getScrollState() {
+    const mathCard = document.querySelector("#mathCard");
+    return {
+      mainY: getMainScrollY(),
+      mathY: mathCard ? mathCard.scrollTop : 0
+    };
+  }
+
+  function applyScrollState(scrollState) {
+    if (!scrollState) return;
+
+    const mathCard = document.querySelector("#mathCard");
+    const mainY = Number(scrollState.mainY) || 0;
+    const mathY = Number(scrollState.mathY) || 0;
+
+    // Apply AFTER layout settles (dataset load + render changes height)
+    requestAnimationFrame(() => {
+      setMainScrollY(mainY);
+      if (mathCard) mathCard.scrollTop = mathY;
+    });
+  }
+
+  // If interactiveState arrives before UI/data is fully ready, stash it.
+  let pendingScrollState = null;
+
+   
   // ----------------------------
   // CODAP phone / request layer
   // ----------------------------
@@ -112,6 +154,10 @@
        showAllCases: !!els.showAllCases?.checked,
        prevLineActive: !!model.prevLineActive,
        prevLine: model.prevLine || null 
+       
+       // Scroll positions
+       scroll: getScrollState()
+        
      };
    }
  
@@ -146,6 +192,11 @@
      if (typeof s.epoch === "number") epoch = s.epoch;
      if (typeof s.prevLineActive === "boolean") model.prevLineActive = s.prevLineActive;
      if (s.prevLine && typeof s.prevLine === "object") model.prevLine = s.prevLine;
+
+      // capture scroll restore request (apply later, after render/layout)
+     if (s.scroll && typeof s.scroll === "object") {
+       pendingScrollState = s.scroll;
+     }
    }
 
          function phoneHandler(request, callback) {
@@ -168,6 +219,13 @@
               updateSliderLabels();
               renderViz();
               updateCurrentPointPanel();
+
+               //Apply any saved scroll after restore is visually complete
+              if (pendingScrollState) {
+                applyScrollState(pendingScrollState);
+                pendingScrollState = null;
+              }
+               
               callback({ success: true });
             })
             .catch((e) => {
@@ -232,6 +290,13 @@
         updateSliderLabels();
         renderViz();
         updateCurrentPointPanel();
+
+         // Apply any saved scroll after restore is visually complete
+        if (pendingScrollState) {
+          applyScrollState(pendingScrollState);
+          pendingScrollState = null;
+        }
+         
       } catch (e) {
         // If CODAP has no saved state yet, that's fine — start fresh.
       }
