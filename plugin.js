@@ -1325,8 +1325,8 @@ function renderViz() {
     els.indexInfo.textContent = String(curIndex + 1) + " / " + String(cases.length);
 
    // els.scoreInfo.textContent = s.toFixed(3);
-    els.predInfo.textContent = (yhat === 1 ? "+1 (Positive)" : "-1 (Negative)");
-    els.sentInfo.textContent = (pt.label === 1 ? "+1 (Positive)" : "-1 (Negative)");
+    els.predInfo.textContent = (yhat === 1 ? "Positive" : "Negative");
+    els.sentInfo.textContent = (pt.label === 1 ? "Positive" : "Negative");
   //  els.mistakeInfo.textContent = mistake ? "YES" : "no";
    if (!awaitingImprove) els.deltaInfo.textContent = "";
 
