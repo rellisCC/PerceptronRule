@@ -542,17 +542,21 @@ function predFromScore(s) {
      // Save the old line so we can fade it + draw arrows after learning
       model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
       model.prevLineActive = true;
-    // Standard perceptron update on mistake:
-    // w <- w + lr * y * x
-    // c <- c + lr * y
-    const y = pt.label;
-    const dw1 = lr * y * pt.feat1;
-    const dw2 = lr * y * pt.feat2;
-    const dc = lr * y;
-
-    model.w1 += dw1;
-    model.w2 += dw2;
-    model.c += dc;
+    // Error-based update with 0/1 targets:
+     // yhat01 = 1 if score > 0 else 0
+     // e = target01 - yhat01  (so e ∈ {-1,0,+1})
+     // w <- w + lr * e * x
+     // c <- c + lr * e
+     const yhat01 = pred01FromScore(scorePoint(pt));
+     const e = pt.label - yhat01;
+   
+     const dw1 = lr * e * pt.feat1;
+     const dw2 = lr * e * pt.feat2;
+     const dc = lr * e;
+   
+     model.w1 += dw1;
+     model.w2 += dw2;
+     model.c += dc;
 
     return { dw1, dw2, dc };
   }
