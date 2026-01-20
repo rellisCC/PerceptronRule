@@ -1567,6 +1567,7 @@ function renderViz() {
     const sBefore = scorePoint(pt);
     const y = pt.label;
     const yhat = predFromScore(sBefore);
+    const e = y - yhat;
 
     const deltas = perceptronUpdate(pt, lr);
 
