@@ -1517,13 +1517,20 @@ function renderViz() {
   function evaluateAll() {
     if (!cases.length) return { acc: 0, mse: 0, n: 0 };
 
+    const sigmoid = (z) => {
+    if (z >= 40) return 1;
+    if (z <= -40) return 0;
+    return 1 / (1 + Math.exp(-z));
+  };
+     
     let correct = 0;
     let sumSq = 0;
     cases.forEach(pt => {
       const s = scorePoint(pt);
       const yhat = predFromScore(s);
       if (yhat === pt.label) correct += 1;
-      const diff = (pt.label - yhat);
+      const p = sigmoid(s);              // continuous output in [0,1]
+      const diff = (pt.label - p);
       sumSq += diff * diff;
     });
 
