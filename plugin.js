@@ -1718,7 +1718,12 @@ els.deltaInfo.innerHTML = `
         if (!currentDatasetName) return;
         try {
           cases = await loadDatasetCases(currentDatasetName, els.collectionSelect.value);
-         
+
+           cases = cases.map(pt => ({
+               ...pt,
+               label: (pt.label > 0 ? 1 : 0)
+             }));
+           
           // RECORD which table is active (for interactiveState restore)
           currentCollectionName = els.collectionSelect.value;
                  
