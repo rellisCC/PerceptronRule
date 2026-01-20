@@ -1569,6 +1569,7 @@ function renderViz() {
     const w1Old = model.w1 - deltas.dw1;
 const w2Old = model.w2 - deltas.dw2;
 const cOld  = model.c  - deltas.dc;
+const op = (predFromScore(0) === 1) ? "≥" : ">";
 
 function fmtRule(w1, w2, c, bold=false) {
   const b = (s) => bold ? `<b>${s}</b>` : s;
@@ -1577,11 +1578,11 @@ function fmtRule(w1, w2, c, bold=false) {
   const cs  = b(c.toFixed(2));
   const w2sign = (w2 >= 0) ? " + " : " − ";
   const csign  = (c  >= 0) ? " + " : " − ";
-  return `${w1s}·feat1${w2sign}${b(Math.abs(w2).toFixed(2))}·feat2${csign}${b(Math.abs(c).toFixed(2))} ≥ 0`;
+  return `${w1s}·feat1${w2sign}${b(Math.abs(w2).toFixed(2))}·feat2${csign}${b(Math.abs(c).toFixed(2))} ${op} 0`;
 }
 
 els.deltaInfo.innerHTML = `
-  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ≥ 0</div>
+  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ${op} </div>
     <div class="mathline"><b>Old model: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
     
   <div class="mathblock">
