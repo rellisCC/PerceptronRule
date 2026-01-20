@@ -532,6 +532,10 @@ function predFromScore(s) {
   return s > SCORE_EPS ? 1 : -1;
 }
 
+  function pred01FromScore(s) {
+  // Binary prediction: 1 if strictly above the boundary, else 0 (so score=0 -> 0)
+  return s > SCORE_EPS ? 1 : 0;
+} 
 
 
   function perceptronUpdate(pt, lr) {
