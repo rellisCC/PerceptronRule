@@ -1497,7 +1497,7 @@ function renderViz() {
       // Ensure label is 0 or 1
       cases = cases.map(pt => ({
         ...pt,
-        label: (pt.label >= 0 ? 1 : 0)
+        label: (pt.label > 0 ? 1 : 0)
       }));
        
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
