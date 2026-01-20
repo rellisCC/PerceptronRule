@@ -874,7 +874,8 @@ function drawDecisionLine() {
     const w1 = fmt(params.w1);
     const w2 = fmt(params.w2);
     const c  = fmt(params.c);
-    return `${w1}·feat1 + ${w2}·feat2 + ${c} ≥ 0`;
+    const op = (predFromScore(0) === 1) ? "≥" : ">";
+    return `${w1}·feat1 + ${w2}·feat2 + ${c} ${op} 0`;
   }
 
   function placeLabel(seg, text, opts) {
