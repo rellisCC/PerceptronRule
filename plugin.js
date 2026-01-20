@@ -1523,7 +1523,7 @@ function renderViz() {
       const s = scorePoint(pt);
       const yhat = predFromScore(s);
       if (yhat === pt.label) correct += 1;
-      const diff = (pt.label - s);
+      const diff = (pt.label - yhat);
       sumSq += diff * diff;
     });
 
