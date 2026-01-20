@@ -1067,11 +1067,15 @@ if (model.prevLineActive && model.prevLine) {
 }
 
 // ---- draw new line + label (always) ----
+const boundaryIncludesZero = (predFromScore(0) === 1); 
+const boundaryDash = boundaryIncludesZero ? undefined : "6,4";
+   
 const newParams = { w1: model.w1, w2: model.w2, c: model.c };
 const newSeg = drawLineForParams(newParams, {
   stroke: "#03A9F4",
   "stroke-width": 3,
-  opacity: 1
+  opacity: 1,
+   "stroke-dasharray": boundaryDash
 });
 
 let newLabel = null;
