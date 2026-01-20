@@ -527,12 +527,6 @@ const values = SAMPLE_SPEC.cases.map(row => {
 const SCORE_EPS = 1e-6;
 
 function predFromScore(s) {
-  // Treat points *on the line* as negative.
-  // Also treat tiny floating-point negatives as "on the line".
-  return s > SCORE_EPS ? 1 : -1;
-}
-
-  function pred01FromScore(s) {
   // Binary prediction: 1 if strictly above the boundary, else 0 (so score=0 -> 0)
   return s > SCORE_EPS ? 1 : 0;
 } 
@@ -547,7 +541,7 @@ function predFromScore(s) {
      // e = target01 - yhat01  (so e ∈ {-1,0,+1})
      // w <- w + lr * e * x
      // c <- c + lr * e
-     const yhat01 = pred01FromScore(scorePoint(pt));
+     const yhat01 = predFromScore(scorePoint(pt));
      const e = pt.label - yhat01;
    
      const dw1 = lr * e * pt.feat1;
