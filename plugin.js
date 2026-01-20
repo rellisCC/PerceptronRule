@@ -527,9 +527,9 @@ const values = SAMPLE_SPEC.cases.map(row => {
 const SCORE_EPS = 1e-6;
 
 function predFromScore(s) {
-  // Treat points *on the line* as positive.
+  // Treat points *on the line* as negative.
   // Also treat tiny floating-point negatives as "on the line".
-  return s >= -SCORE_EPS ? 1 : -1;
+  return s > SCORE_EPS ? 1 : -1;
 }
 
 
