@@ -1496,10 +1496,10 @@ function renderViz() {
       setModelStatus("No cases loaded yet. If using Sample Dataset, click Load/Reset Sample Dataset.");
     } else {
        
-      // Ensure label is ±1
+      // Ensure label is 0 or 1
       cases = cases.map(pt => ({
         ...pt,
-        label: (pt.label >= 0 ? 1 : -1)
+        label: (pt.label >= 0 ? 1 : 0)
       }));
        
       curIndex = Math.max(0, Math.min(curIndex, cases.length - 1));
