@@ -1582,7 +1582,7 @@ function fmtRule(w1, w2, c, bold=false) {
 }
 
 els.deltaInfo.innerHTML = `
-  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ${op} </div>
+  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ${op} 0 </div>
     <div class="mathline"><b>Old model: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
     
   <div class="mathblock">
