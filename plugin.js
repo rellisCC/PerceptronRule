@@ -1591,21 +1591,21 @@ els.deltaInfo.innerHTML = `
   <div class="mathblock">
     <div class="mathline"><b>w1 adjustment</b></div>
     <div class="mathline small">New w1 = Old w1 + LearnRate × ErrorType × feat1</div>
-    <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat1}</div>
+    <div class="mathline small">New w1 = ${w1Old.toFixed(2)} + ${lr.toFixed(2)} × (${e}) × ${pt.feat1}</div>
     <div class="mathline small"><b> New w1 = ${model.w1.toFixed(2)}</b></div>
   </div>
 
   <div class="mathblock">
     <div class="mathline"><b>w2 adjustment</b></div>
     <div class="mathline small">New w2 = Old w2 + LearnRate × ErrorType × feat2</div>
-    <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${y}) × ${pt.feat2}</div>
+    <div class="mathline small"> New w2 = ${w2Old.toFixed(2)} + ${lr.toFixed(2)} × (${e}) × ${pt.feat2}</div>
     <div class="mathline small"><b>New w2 = ${model.w2.toFixed(2)}</b></div>
   </div>
 
   <div class="mathblock">
     <div class="mathline"><b>c adjustment</b></div>
     <div class="mathline small">New c = Old c + LearnRate × ErrorType</div>
-    <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${y})</div>
+    <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${e})</div>
     <div class="mathline small"><b> New c = ${model.c.toFixed(2)}</b></div>
   </div>
 
