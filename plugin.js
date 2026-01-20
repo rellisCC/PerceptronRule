@@ -740,10 +740,12 @@ function drawAxes() {
 }
 
 function drawDecisionRegion() {
-  // Region where w1*feat1 + w2*feat2 + c >= 0 (blue)
+  // Region where w1*feat1 + w2*feat2 + c > 0 (blue/positive)
   // We approximate by filling polygon clipped to plot box.
   const w1 = model.w1, w2 = model.w2, c = model.c;
-
+  const boundaryIncludesZero = (predFromScore(0) === 1);
+  const thresh = boundaryIncludesZero ? 0 : SCORE_EPS;
+   
   const bx0 = AX.xmin, bx1 = AX.xmax, by0 = AX.ymin, by1 = AX.ymax;
 
   const corners = [
@@ -752,7 +754,8 @@ function drawDecisionRegion() {
   ];
 
   function inside(p) {
-    return (w1 * p.x + w2 * p.y + c) >= 0;
+   // Positive region: score > thresh (exclusive when thresh=SCORE_EPS, inclusive when thresh=0)
+     return (w1 * p.x + w2 * p.y + c) > thresh;
   }
 
   function intersectSeg(A, B) {
