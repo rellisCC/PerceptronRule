@@ -985,6 +985,32 @@ function drawDecisionLine() {
   // Keep the *entire* label bbox within the plot area (not just the anchor point)
   const b = t.getBBox();
 
+   // --- avoid covering the current point (so the point stays clickable on top) ---
+  // Only do this for the bold/current label.
+  if (opts.bold && Array.isArray(cases) && cases[curIndex]) {
+    const pt = cases[curIndex];
+    const cx = sx(pt.feat1);
+    const cy = sy(pt.feat2);
+    const r  = 8;      // current-point radius in drawPoint()
+    const pad = 6;
+
+    const bb0 = t.getBBox();
+    const ex = r + pad;
+    const ey = r + pad;
+
+    const overlap =
+      (cx >= bb0.x - ex) && (cx <= bb0.x + bb0.width + ex) &&
+      (cy >= bb0.y - ey) && (cy <= bb0.y + bb0.height + ey);
+
+    if (overlap) {
+      const centerY = bb0.y + bb0.height / 2;
+      const shift = (cy > centerY) ? -(r + 14) : (r + 14);
+      const y2 = Number(t.getAttribute("y")) + shift;
+      t.setAttribute("y", String(y2));
+    }
+  }
+
+     
   let dx = 0, dy = 0;
 
   if (b.x < minX) dx = (minX - b.x);
