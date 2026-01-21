@@ -969,7 +969,8 @@ function drawDecisionLine() {
   x = Math.min(maxX, Math.max(minX, x));
   y = Math.min(maxY, Math.max(minY, y));
 
-  const textAnchor = (opts.anchor === "rightExit") ? "end" : "start"; //To anchor faded line within the box
+  const midX = (minX + maxX) / 2;
+  const textAnchor = (x > midX) ? "end" : "start";
      
   const t = svgEl("text", {
     x, y,
