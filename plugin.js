@@ -23,7 +23,7 @@
 
     w1: $("#w1"),
     w2: $("#w2"),
-    c: $("#c"),
+    a: $("#a"),
     lr: $("#lr"),
     w1Val: $("#w1Val"),
     w2Val: $("#w2Val"),
@@ -167,7 +167,7 @@
      // restore parameters if present
      if (typeof s.w1 === "number") model.w1 = s.w1;
      if (typeof s.w2 === "number") model.w2 = s.w2;
-     if (typeof s.c === "number") model.a = s.a;
+     if (typeof s.a === "number") model.a = s.a;
    
      // restore UI controls if present
      if (typeof s.lr === "number" && els.lr) els.lr.value = String(s.lr);
@@ -534,7 +534,7 @@ function predFromScore(s) {
 
   function perceptronUpdate(pt, lr) {
      // Save the old line so we can fade it + draw arrows after learning
-      model.prevLine = { w1: model.w1, w2: model.w2, c: model.a };
+      model.prevLine = { w1: model.w1, w2: model.w2, a: model.a };
       model.prevLineActive = true;
     // Error-based update with 0/1 targets:
      // yhat01 = 1 if score > 0 else 0
@@ -840,7 +840,7 @@ function clipSegmentToBounds(A, B) {
 function drawDecisionLine() {
     model.lineLabelBBox = null;
   function drawLineForParams(params, style) {
-    const w1 = params.w1, w2 = params.w2, c = params.c;
+    const w1 = params.w1, w2 = params.w2, a = params.a;
 
     let A, B;
     if (w2 !== 0) {
@@ -875,9 +875,9 @@ function drawDecisionLine() {
   function labelForParams(params, opacity) {
     const w1 = fmt(params.w1);
     const w2 = fmt(params.w2);
-    const c  = fmt(params.c);
+    const a  = fmt(params.a);
     const op = (predFromScore(0) === 1) ? "≥" : ">";
-    return `${w1}·feat1 + ${w2}·feat2 + ${c} ${op} 0`;
+    return `${w1}·feat1 + ${w2}·feat2 + ${a} ${op} 0`;
   }
 
   function placeLabel(seg, text, opts) {
@@ -1076,7 +1076,7 @@ if (model.prevLineActive && model.prevLine) {
 const boundaryIncludesZero = (predFromScore(0) === 1); 
 const boundaryDash = boundaryIncludesZero ? undefined : "6,4";
    
-const newParams = { w1: model.w1, w2: model.w2, c: model.a };
+const newParams = { w1: model.w1, w2: model.w2, a: model.a };
 const newSeg = drawLineForParams(newParams, {
   stroke: "#03A9F4",
   "stroke-width": 3,
@@ -1136,7 +1136,7 @@ if (oldLabel && newLabel) {
      model.prevLine &&
      model.prevLine.w1 === model.w1 &&
      model.prevLine.w2 === model.w2 &&
-     model.prevLine.c !== model.a;
+     model.prevLine.a !== model.a;
      
     for (const t of [0.25, 0.5, 0.75]) {
       const P = {
@@ -1581,7 +1581,7 @@ const w2Old = model.w2 - deltas.dw2;
 const aOld  = model.a  - deltas.da;
 const op = (predFromScore(0) === 1) ? "≥" : ">";
 
-function fmtRule(w1, w2, c, bold=false) {
+function fmtRule(w1, w2, a, bold=false) {
   const b = (s) => bold ? `<b>${s}</b>` : s;
   const w1s = b(w1.toFixed(2));
   const w2s = b(w2.toFixed(2));
@@ -1611,8 +1611,8 @@ els.deltaInfo.innerHTML = `
 
   <div class="mathblock">
     <div class="mathline"><b>a adjustment</b></div>
-    <div class="mathline small">New a = Old c + LearnRate × ErrorType</div>
-    <div class="mathline small">New a = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${e})</div>
+    <div class="mathline small">New a = Old a + LearnRate × ErrorType</div>
+    <div class="mathline small">New a = ${aOld.toFixed(2)} + ${lr.toFixed(2)} × (${e})</div>
     <div class="mathline small"><b> New a = ${model.a.toFixed(2)}</b></div>
   </div>
 
