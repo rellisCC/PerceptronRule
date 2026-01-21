@@ -1291,9 +1291,9 @@ function renderViz() {
 
 
   function updateSliderLabels() {
-    els.w1Val.textContent = Number(els.w1.value).toFixed(2);
-    els.w2Val.textContent = Number(els.w2.value).toFixed(2);
-    els.aVal.textContent = Number(els.a.value).toFixed(2);
+    els.w1Val.textContent = Number(model.w1).toFixed(2);
+    els.w2Val.textContent = Number(model.w2).toFixed(2);
+    els.aVal.textContent = Number(model.a).toFixed(2);
     els.lrVal.textContent = LR_STEPS[Number(els.lr.value)];
   }
 
