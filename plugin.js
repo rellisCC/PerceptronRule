@@ -307,7 +307,7 @@
   // ----------------------------
   // Data model
   // ----------------------------
-  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, a: 0.4 };
+  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, a: -0.4 };
   let model = { ...DEFAULT_MODEL };
 
   // Learning rate steps (teaching-friendly, log-spaced)
