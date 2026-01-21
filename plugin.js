@@ -27,7 +27,7 @@
     lr: $("#lr"),
     w1Val: $("#w1Val"),
     w2Val: $("#w2Val"),
-    cVal: $("#cVal"),
+    aVal: $("#aVal"),
     lrVal: $("#lrVal"),
 
     resetModelBtn: $("#resetModelBtn"),
@@ -143,7 +143,7 @@
        // model parameters
        w1: model.w1,
        w2: model.w2,
-       c: model.c,
+       a: model.a,
    
        // UI / training state you likely want to persist
        lr: Number(els.lr?.value ?? 0.1),
@@ -167,7 +167,7 @@
      // restore parameters if present
      if (typeof s.w1 === "number") model.w1 = s.w1;
      if (typeof s.w2 === "number") model.w2 = s.w2;
-     if (typeof s.c === "number") model.c = s.c;
+     if (typeof s.c === "number") model.a = s.a;
    
      // restore UI controls if present
      if (typeof s.lr === "number" && els.lr) els.lr.value = String(s.lr);
@@ -307,7 +307,7 @@
   // ----------------------------
   // Data model
   // ----------------------------
-  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, c: 0.4 };
+  const DEFAULT_MODEL = { w1: 0.4, w2: -0.4, a: -0.4 };
   let model = { ...DEFAULT_MODEL };
 
   // Learning rate steps (teaching-friendly, log-spaced)
@@ -522,7 +522,7 @@ const values = SAMPLE_SPEC.cases.map(row => {
   // Perceptron math
   // ----------------------------
   function scorePoint(pt) {
-    return model.w1 * pt.feat1 + model.w2 * pt.feat2 + model.c;
+    return model.w1 * pt.feat1 + model.w2 * pt.feat2 + model.a;
   }
 const SCORE_EPS = 1e-6;
 
@@ -534,7 +534,7 @@ function predFromScore(s) {
 
   function perceptronUpdate(pt, lr) {
      // Save the old line so we can fade it + draw arrows after learning
-      model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
+      model.prevLine = { w1: model.w1, w2: model.w2, c: model.a };
       model.prevLineActive = true;
     // Error-based update with 0/1 targets:
      // yhat01 = 1 if score > 0 else 0
@@ -546,13 +546,13 @@ function predFromScore(s) {
    
      const dw1 = lr * e * pt.feat1;
      const dw2 = lr * e * pt.feat2;
-     const dc = lr * e;
+     const da = lr * e;
    
      model.w1 += dw1;
      model.w2 += dw2;
-     model.c += dc;
+     model.a += da;
 
-    return { dw1, dw2, dc };
+    return { dw1, dw2, da };
   }
 
   function isMistake(pt) {
@@ -744,7 +744,7 @@ function drawAxes() {
 function drawDecisionRegion() {
   // Region where w1*feat1 + w2*feat2 + c > 0 (blue/positive)
   // We approximate by filling polygon clipped to plot box.
-  const w1 = model.w1, w2 = model.w2, c = model.c;
+  const w1 = model.w1, w2 = model.w2, c = model.a;
   const boundaryIncludesZero = (predFromScore(0) === 1);
   const thresh = boundaryIncludesZero ? 0 : SCORE_EPS;
    
@@ -1076,7 +1076,7 @@ if (model.prevLineActive && model.prevLine) {
 const boundaryIncludesZero = (predFromScore(0) === 1); 
 const boundaryDash = boundaryIncludesZero ? undefined : "6,4";
    
-const newParams = { w1: model.w1, w2: model.w2, c: model.c };
+const newParams = { w1: model.w1, w2: model.w2, c: model.a };
 const newSeg = drawLineForParams(newParams, {
   stroke: "#03A9F4",
   "stroke-width": 3,
@@ -1129,14 +1129,14 @@ if (oldLabel && newLabel) {
     const cross = ax * by - ay * bx;
     const curveSign = cross >= 0 ? 1 : -1;
 
-    const W1 = model.w1, W2 = model.w2, Cc = model.c;
+    const W1 = model.w1, W2 = model.w2, Cc = model.a;
     const denom = (W1 * W1 + W2 * W2) || 1;
 
    const cOnly =
      model.prevLine &&
      model.prevLine.w1 === model.w1 &&
      model.prevLine.w2 === model.w2 &&
-     model.prevLine.c !== model.c;
+     model.prevLine.c !== model.a;
      
     for (const t of [0.25, 0.5, 0.75]) {
       const P = {
@@ -1275,14 +1275,14 @@ function renderViz() {
   function syncSlidersToModel() {
     els.w1.value = String(model.w1);
     els.w2.value = String(model.w2);
-    els.c.value = String(model.c);
+    els.c.value = String(model.a);
     updateSliderLabels();
   }
 
      function updateModelFromSliders() {
      model.w1 = Number(els.w1.value);
      model.w2 = Number(els.w2.value);
-     model.c  = Number(els.c.value);
+     model.a  = Number(els.c.value);
    
      updateSliderLabels();
      renderViz();
@@ -1293,7 +1293,7 @@ function renderViz() {
   function updateSliderLabels() {
     els.w1Val.textContent = Number(els.w1.value).toFixed(2);
     els.w2Val.textContent = Number(els.w2.value).toFixed(2);
-    els.cVal.textContent = Number(els.c.value).toFixed(2);
+    els.aVal.textContent = Number(els.a.value).toFixed(2);
     els.lrVal.textContent = LR_STEPS[Number(els.lr.value)];
   }
 
@@ -1578,22 +1578,22 @@ function renderViz() {
 
     const w1Old = model.w1 - deltas.dw1;
 const w2Old = model.w2 - deltas.dw2;
-const cOld  = model.c  - deltas.dc;
+const aOld  = model.a  - deltas.da;
 const op = (predFromScore(0) === 1) ? "≥" : ">";
 
 function fmtRule(w1, w2, c, bold=false) {
   const b = (s) => bold ? `<b>${s}</b>` : s;
   const w1s = b(w1.toFixed(2));
   const w2s = b(w2.toFixed(2));
-  const cs  = b(c.toFixed(2));
+  const as  = b(a.toFixed(2));
   const w2sign = (w2 >= 0) ? " + " : " − ";
-  const csign  = (c  >= 0) ? " + " : " − ";
-  return `${w1s}·feat1${w2sign}${b(Math.abs(w2).toFixed(2))}·feat2${csign}${b(Math.abs(c).toFixed(2))} ${op} 0`;
+  const asign  = (a  >= 0) ? " + " : " − ";
+  return `${w1s}·feat1${w2sign}${b(Math.abs(w2).toFixed(2))}·feat2${asign}${b(Math.abs(a).toFixed(2))} ${op} 0`;
 }
 
 els.deltaInfo.innerHTML = `
-  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>c</b> ${op} 0 </div>
-    <div class="mathline"><b>Old model: ${fmtRule(w1Old, w2Old, cOld, false)}</b></div>
+  <div class="mathline"><b>Model format: w1</b>*feature1 + <b>w2</b>*feature2 + <b>a</b> ${op} 0 </div>
+    <div class="mathline"><b>Old model: ${fmtRule(w1Old, w2Old, aOld, false)}</b></div>
     
   <div class="mathblock">
     <div class="mathline"><b>w1 adjustment</b></div>
@@ -1610,13 +1610,13 @@ els.deltaInfo.innerHTML = `
   </div>
 
   <div class="mathblock">
-    <div class="mathline"><b>c adjustment</b></div>
-    <div class="mathline small">New c = Old c + LearnRate × ErrorType</div>
-    <div class="mathline small">New c = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${e})</div>
-    <div class="mathline small"><b> New c = ${model.c.toFixed(2)}</b></div>
+    <div class="mathline"><b>a adjustment</b></div>
+    <div class="mathline small">New a = Old c + LearnRate × ErrorType</div>
+    <div class="mathline small">New a = ${cOld.toFixed(2)} + ${lr.toFixed(2)} × (${e})</div>
+    <div class="mathline small"><b> New a = ${model.a.toFixed(2)}</b></div>
   </div>
 
-  <div class="mathline"><b>New model</b>: ${fmtRule(model.w1, model.w2, model.c, true)}</div>
+  <div class="mathline"><b>New model</b>: ${fmtRule(model.w1, model.w2, model.a, true)}</div>
 `;
 
 
@@ -1681,19 +1681,19 @@ els.deltaInfo.innerHTML = `
 
     // The line
      function capturePrevLine() {
-        model.prevLine = { w1: model.w1, w2: model.w2, c: model.c };
+        model.prevLine = { w1: model.w1, w2: model.w2, a: model.a };
         model.prevLineActive = true;
       }
       
-      // Capture old line once at start of slider drag (w1, w2, c only)
-      [els.w1, els.w2, els.c].forEach(inp => {
+      // Capture old line once at start of slider drag (w1, w2, a only)
+      [els.w1, els.w2, els.a].forEach(inp => {
         inp.addEventListener("pointerdown", () => {
           capturePrevLine();
         });
       });
       
       // Slider live updates
-      [els.w1, els.w2, els.c, els.lr].forEach(inp => {
+      [els.w1, els.w2, els.a, els.lr].forEach(inp => {
         inp.addEventListener("input", () => {
           updateSliderLabels();
           if (inp !== els.lr) updateModelFromSliders();
