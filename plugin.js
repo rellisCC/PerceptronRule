@@ -844,10 +844,10 @@ function drawDecisionLine() {
 
     let A, B;
     if (w2 !== 0) {
-      A = { x: AX.xmin, y: (-c - w1 * AX.xmin) / w2 };
-      B = { x: AX.xmax, y: (-c - w1 * AX.xmax) / w2 };
+      A = { x: AX.xmin, y: (-a - w1 * AX.xmin) / w2 };
+      B = { x: AX.xmax, y: (-a - w1 * AX.xmax) / w2 };
     } else if (w1 !== 0) {
-      const x = (-c) / w1;
+      const x = (-a) / w1;
       A = { x, y: AX.ymin };
       B = { x, y: AX.ymax };
     } else {
@@ -1275,14 +1275,14 @@ function renderViz() {
   function syncSlidersToModel() {
     els.w1.value = String(model.w1);
     els.w2.value = String(model.w2);
-    els.c.value = String(model.a);
+    els.a.value = String(model.a);
     updateSliderLabels();
   }
 
      function updateModelFromSliders() {
      model.w1 = Number(els.w1.value);
      model.w2 = Number(els.w2.value);
-     model.a  = Number(els.c.value);
+     model.a  = Number(els.a.value);
    
      updateSliderLabels();
      renderViz();
