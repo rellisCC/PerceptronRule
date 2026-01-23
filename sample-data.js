@@ -17,7 +17,7 @@ window.SAMPLE_DATASETS = [
       { ID:"RF", Text:"Whenever I am having a bad day, I come to the best place, Mama’s, because the pizza and vibe is simply the best.", feat1:2, feat2:1, label: 1 },
       { ID:"RG", Text:"I love eating at Mama’s pizza place!", feat1:0, feat2:0, label: 1 },
       { ID:"RH", Text:"With the bad smell and the bad flavors, I would challenge anyone to consider this place to be good, let alone the best.", feat1:1, feat2:2, label:0 },
-      { ID:"RI", Text:"If you want the best, definitely don’t come here! The pizza is bad, the location is bad, and the idea that this is the best pizza place is truly laughable.", feat1:2, feat2:2, label:0 }
+      { ID:"RI", Text:"If you want the best, don’t come here! The pizza is bad, the location is bad... The idea that this is the best place is laughable.", feat1:2, feat2:2, label:0 }
     ]
   }
 ];
