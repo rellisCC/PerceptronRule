@@ -1440,6 +1440,10 @@ function renderViz() {
   async function chooseDataset(name) {
     currentDatasetName = name;
 
+    // Use the dropdown's visible label (renamed table title) for user-facing messages
+     const selOpt = Array.from(els.datasetSelect?.options || []).find(o => o.value === name);
+     const displayName = (selOpt?.textContent || name);
+     
     if (name === SAMPLE_NAME) {
      // Never show the Table dropdown for the sample dataset
         if (els.collectionField) els.collectionField.style.display = "none";
@@ -1460,7 +1464,7 @@ function renderViz() {
         collectionsRes = await codapRequest("get", `dataContext[${name}].collectionList`);
       } catch (e) {
         // If the chosen CODAP dataset doesn't exist yet, don't treat it as "not connected"
-        setModelStatus(`Dataset "${name}" not found in this document. Falling back to Sample Dataset.`);
+        setModelStatus(`Dataset "${displayName}" not found in this document. Falling back to Sample Dataset.`);
         els.datasetSelect.value = SAMPLE_NAME;
         currentDatasetName = SAMPLE_NAME;
         return chooseDataset(SAMPLE_NAME);
@@ -1478,7 +1482,7 @@ function renderViz() {
     cases = [];
     if (els.collectionField) els.collectionField.style.display = "none";
     setModelStatus(
-      `No usable table found in "${name}". ` +
+      `No usable table found in "${displayName}". ` +
       `Need columns feat1, feat2, and label (names may include a suffix after ":").`
     );
     renderViz();
@@ -1534,7 +1538,7 @@ function renderViz() {
       awaitingImprove = false;
       showingAll = !!els.showAllCases?.checked;
        
-      setModelStatus(`Loaded ${cases.length} cases from "${name}".`);
+      setModelStatus(`Loaded ${cases.length} cases from "${displayName}".`);
       renderViz();
       updateCurrentPointPanel();
     }
