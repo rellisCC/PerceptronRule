@@ -358,7 +358,7 @@ async function listCODAPDatasets() {
   // Prefer title (what users see), fall back to name.
   return dcs
     .map(dc => ({
-       name: (dc && (dc.name || dc.title)) || "",
+       name: (dc && dc.name) || "",
        title: (dc && (dc.title || dc.name)) || ""
          }))
     .filter(dc => dc.name);
@@ -1422,8 +1422,8 @@ function renderViz() {
         // Populate dropdown
         dcs.forEach(dc => {
           const opt = document.createElement("option");
-          opt.value = dc.name;
-          opt.textContent = dc.name;
+          opt.value = dc.name; // Internal name (stable)
+          opt.textContent = dc.title || dc.name; //Display name (user changed)
           els.datasetSelect.appendChild(opt);
         });
       
